@@ -7,10 +7,11 @@ After activation of the plugin reopen the project (only needed to do upon enabli
 
 Features:
 
-Pressing Ctrl+E opens a popup, which lists all open scenes and scripts.
-The file names are preceded by a line number and followed by their respective file location.
-Ending the search_string with \" X\", where X is an interger, jumps to that line in the list.
-Starting the search-string with \"c \" (as in code) filters the open scripts.
-Starting the search-string with \"s \" (as in scene) filters the open scenes.
+- Pressing Ctrl+E opens a popup, which lists all open scenes and scripts.
+- The file names are preceded by a line number and followed by their respective file location.
+- Ending the search_string with \" X\", where X is an interger, jumps to that line in the list.
+- Starting the search-string with \"c \" (as in code) filters the open scripts.
+- Starting the search-string with \"s \" (as in scene) filters the open scenes.
+- Opening a script switches to the scene tab, which the script is attached to (only works if the script is attached to the scene root). This gives you autocompletion on the node paths to children.
 
 (The filter only applies to the actual file name, so you won't get flooded with search results)
