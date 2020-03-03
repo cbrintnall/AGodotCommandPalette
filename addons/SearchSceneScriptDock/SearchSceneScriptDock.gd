@@ -56,10 +56,10 @@ func _open_selection() -> void:
 		var selected_file_name = selection_without_line_number.split("    >>    ")[0] as String
 			
 		if selected_file_name.findn(".gd") != -1 or selected_file_name.findn(".vs") != -1: # selected file is a gd/gdns/vs script
-			for scene_path in INTERFACE.get_open_scenes():
-				if scene_path.get_file() == selected_file_name.split(".")[0] + ".tscn":
-					print("sad")
-					INTERFACE.open_scene_from_path(scene_path)
+			var scene_name = selected_file_name.split(".")[0] + ".tscn"
+			if open_scenes.has(scene_name):
+				if open_scenes[scene_name].get_file() == scene_name:
+					INTERFACE.open_scene_from_path(open_scenes[scene_name])
 			INTERFACE.edit_resource(open_scripts[selected_file_name])
 			INTERFACE.call_deferred("set_main_screen_editor", "Script")
 			
@@ -72,8 +72,6 @@ func _open_selection() -> void:
 # search happens only on the actual file name
 func _update_list() -> void:
 	list.clear()
-	open_scenes.clear()
-	open_scripts.clear()
 	var search_string = filter.text as String
 	
 	var quickselect_line = 0 # typing " X" (where X is an integer) at the end of the search_string jumps to that item in the list
@@ -97,28 +95,28 @@ func _update_list() -> void:
 
 
 func _add_scripts(search_string : String) -> void:
+	open_scripts.clear()
 	var script_icon = INTERFACE.get_base_control().get_icon("Script", "EditorIcons")
 	for script in EDITOR.get_open_scripts():
 		var script_name = script.resource_path.get_file()
+		open_scripts[script_name] = script
 		if search_string:
 			if script_name.findn(search_string) != -1 :
-				open_scripts[script_name] = script
 				list.add_item(script_name + "    >>    " + script.resource_path.get_base_dir(), script_icon)
 		else:
-			open_scripts[script_name] = script
 			list.add_item(script_name + "    >>    " + script.resource_path.get_base_dir(), script_icon)
 
 
 func _add_scenes(search_string : String) -> void:
+	open_scenes.clear()
 	var scene_icon = INTERFACE.get_base_control().get_icon("PackedScene", "EditorIcons")
 	for scene_path in INTERFACE.get_open_scenes():
 		var scene_name = scene_path.get_file()
+		open_scenes[scene_name] = scene_path
 		if search_string:
 			if scene_name.findn(search_string) != -1:
-				open_scenes[scene_name] = scene_path
 				list.add_item(scene_name + "    >>    " + scene_path.get_base_dir(), scene_icon)
 		else:
-			open_scenes[scene_name] = scene_path
 			list.add_item(scene_name + "    >>    " + scene_path.get_base_dir(), scene_icon)
 
 
