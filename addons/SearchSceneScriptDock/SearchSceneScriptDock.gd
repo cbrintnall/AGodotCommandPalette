@@ -5,8 +5,8 @@ extends Popup
 onready var filter = $Panel/MarginContainer/VBoxContainer/MarginContainer2/VBoxContainer/Filter
 onready var list = $Panel/MarginContainer/VBoxContainer/MarginContainer2/VBoxContainer/MarginContainer/HBoxContainer/ItemList
 
-var open_scenes : Dictionary # this saves the actual Scripts (class) in the list
-var open_scripts : Dictionary # this saves the file paths to the scenes in the list
+var open_scenes : Dictionary # this saves the actual Scripts (class) 
+var open_scripts : Dictionary # this saves the file paths to the scenes
 
 var PLUGIN : EditorPlugin
 var INTERFACE : EditorInterface
