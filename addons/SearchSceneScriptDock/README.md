@@ -12,6 +12,6 @@ Features:
 - Ending the search_string with \" X\", where X is an interger, jumps to that line in the list.
 - Starting the search-string with \"c \" (as in code) filters the open scripts.
 - Starting the search-string with \"s \" (as in scene) filters the open scenes.
-- Opening a script switches to the scene tab, which the script is attached to (only works if the script is attached to the scene root). This gives you autocompletion on the node paths to children.
+- Opening a script switches to the scene tab, which the script is attached to (only works if the script is attached to the scene root and has the same file name). This gives you autocompletion on the node paths to children.
 
 (The filter only applies to the actual file name, so you won't get flooded with search results)
