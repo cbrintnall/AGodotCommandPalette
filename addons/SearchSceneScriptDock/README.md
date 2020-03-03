@@ -1,5 +1,5 @@
 # SearchScriptScenePlugin
-<<<<<<< HEAD
+
 This plugin for the Godot game engine (3.2.X) adds a global keyboard shortcut to access a list of all open scripts and scenes which can be filtered by a search_string.
 
 After activation of the plugin reopen the project (only needed to do upon enabling the plugin the first time).
