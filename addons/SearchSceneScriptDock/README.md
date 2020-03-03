@@ -1,5 +1,5 @@
 # SearchScriptScenePlugin
-This plugin for the Godot game engine (3.2.X) enables you to search (case-insensitive) the open scenes and scripts to quickly switch to them.
+This plugin for the Godot game engine (3.2.X) adds a global keyboard shortcut (Ctrl+E) to access a list of all open scripts and scenes which can be filtered by a search_string.
 
 Starting the search-string with \"c \" (for code) searches the open scripts.
 Using  \"s \" (for scene) only goes through the open scenes.
