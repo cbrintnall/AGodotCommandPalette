@@ -5,8 +5,8 @@ extends Popup
 onready var filter = $Panel/MarginContainer/VBoxContainer/MarginContainer2/VBoxContainer/Filter
 onready var list = $Panel/MarginContainer/VBoxContainer/MarginContainer2/VBoxContainer/MarginContainer/HBoxContainer/ItemList
 
-var open_scenes : Dictionary # this saves the actual Scripts (class)
-var open_scripts : Dictionary # this saves the file paths to the scenes
+var open_scenes : Dictionary # this saves the actual Scripts (class) in the list
+var open_scripts : Dictionary # this saves the file paths to the scenes in the list
 
 var PLUGIN : EditorPlugin
 var INTERFACE : EditorInterface
@@ -53,11 +53,15 @@ func _open_selection() -> void:
 	if selection:
 		var selected = list.get_item_text(selection[0])
 		var selection_without_line_number = selected.split("  ::  ")[1] 
-		var selected_file_name = selection_without_line_number.split("    >>    ")[0]
+		var selected_file_name = selection_without_line_number.split("    >>    ")[0] as String
 			
 		if selected_file_name.findn(".gd") != -1 or selected_file_name.findn(".vs") != -1: # selected file is a gd/gdns/vs script
+			for scene_path in INTERFACE.get_open_scenes():
+				if scene_path.get_file() == selected_file_name.split(".")[0] + ".tscn":
+					print("sad")
+					INTERFACE.open_scene_from_path(scene_path)
 			INTERFACE.edit_resource(open_scripts[selected_file_name])
-			INTERFACE.set_main_screen_editor("Script")
+			INTERFACE.call_deferred("set_main_screen_editor", "Script")
 			
 		else: # selected file is a scene file
 			INTERFACE.open_scene_from_path(open_scenes[selected_file_name])
