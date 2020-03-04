@@ -5,7 +5,7 @@ This plugin for the Godot game engine (3.2.X) adds a global keyboard shortcut to
 After activation of the plugin reopen the project (only needed to do upon enabling the plugin the first time).
 
 
-Features:
+**Features**:
 
 - Pressing Ctrl+E opens a popup, which lists all open scenes and scripts.
 - The file names are preceded by a line number and followed by their respective file location.

@@ -26,10 +26,6 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if event.as_text() == "Control+E" and event.is_pressed():
 		popup_centered()
 		_update_list()
-		
-	if event.as_text() == "Control+Alt+E" and event.is_pressed():
-		popup_centered()
-		_update_list()
 
 
 func _on_popup_hide() -> void:
