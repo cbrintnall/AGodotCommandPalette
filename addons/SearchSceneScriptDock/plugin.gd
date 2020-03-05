@@ -10,6 +10,7 @@ func _enter_tree() -> void:
 	SearchSceneScriptDock.PLUGIN = self
 	SearchSceneScriptDock.INTERFACE = get_editor_interface()
 	SearchSceneScriptDock.EDITOR = get_editor_interface().get_script_editor()
+	SearchSceneScriptDock.FILE_SYSTEM = get_editor_interface().get_resource_filesystem()
 
 
 func _exit_tree() -> void:
