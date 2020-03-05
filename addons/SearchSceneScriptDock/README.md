@@ -12,6 +12,6 @@ After activation of the plugin reopen the project (only needed to do upon enabli
 - Ending the search_string with \" X\", where X is an integer, jumps to that line in the list.
 - Starting the search-string with \"c \" (as in code) filters the open scripts.
 - Starting the search-string with \"s \" (as in scene) filters the open scenes.
-- Opening a script switches also opens the scene, which the script is attached to. It only works if the script and the scene (.tscn) have the same name. This gives you autocompletion on the node paths to children and their methods.
+- Opening a script also opens the scene, which the script is attached to. It only works if the script and the scene (.tscn) have the same name. This gives you autocompletion on the node paths to children and their methods.
 
 (The filter only applies to the actual file name, so you won't get flooded with search results)
