@@ -80,7 +80,7 @@ func _open_selection() -> void:
 			
 		else: # selected file is a scene file
 			INTERFACE.open_scene_from_path(files[selected_file_name])
-			INTERFACE.set_main_screen_editor("3D") if INTERFACE.get_edited_scene_FILE_SYSTEM() is Spatial else INTERFACE.set_main_screen_editor("2D")
+			INTERFACE.set_main_screen_editor("3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.set_main_screen_editor("2D")
 	hide()
 
 
