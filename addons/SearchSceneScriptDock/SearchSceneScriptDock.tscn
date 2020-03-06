@@ -3,7 +3,6 @@
 [ext_resource path="res://addons/SearchSceneScriptDock/SearchSceneScriptDock.gd" type="Script" id=1]
 
 [node name="Scenes and Scripts" type="Popup"]
-visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 1 )
@@ -63,8 +62,18 @@ margin_bottom = 1037.0
 margin_right = 1900.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 50, 0 )
+hint_tooltip = "Starting the search_string with:
+
+\"a \" : list of ALL scripts and scenes.
+\"ac \" or \"ca \" : lists ALL scripts.
+\"as \" or \"sa \" : lists ALL scenes.
+\"c \" : lists all OPEN scripts.
+\"s \" : lists all OPEN scenes.
+
+Pressing Ctrl+E while the popup is visible and no filter is applied will switch between the two most recently opened files (opened via this plugin).
+Ending the search_string with \" X\", where X is an integer, will jump to the X-th item in the list."
 clear_button_enabled = true
-placeholder_text = "Try typing \"c \" or \"s  \" at the beginning or \" INTERGER\" at the end"
+placeholder_text = "tooltip for filter options here..."
 caret_blink = true
 caret_blink_speed = 0.5
 

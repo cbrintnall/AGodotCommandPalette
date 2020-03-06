@@ -16,3 +16,4 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
 	remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_SIDE_RIGHT, SearchSceneScriptDock)
 	SearchSceneScriptDock.free()
+
