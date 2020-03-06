@@ -73,7 +73,7 @@ hint_tooltip = "Starting the search_string with:
 Pressing Ctrl+E while the popup is visible and no filter is applied will switch between the two most recently opened files (opened via this plugin).
 Ending the search_string with \" X\", where X is an integer, will jump to the X-th item in the list."
 clear_button_enabled = true
-placeholder_text = "tooltip for filter options here..."
+placeholder_text = "See this tooltip for filter options..."
 caret_blink = true
 caret_blink_speed = 0.5
 
