@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://addons/SearchSceneScriptDock/SearchSceneScriptDock.gd" type="Script" id=1]
+[ext_resource path="res://addons/SearchSceneScriptPopup/SearchSceneScriptPopup.gd" type="Script" id=1]
 
 [node name="Scenes and Scripts" type="Popup"]
 anchor_right = 1.0
@@ -20,23 +20,23 @@ __meta__ = {
 [node name="MarginContainer" type="MarginContainer" parent="Panel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 10.0
-margin_top = 5.0
-margin_right = -10.0
-margin_bottom = -10.0
+margin_left = 15.0
+margin_top = 10.0
+margin_right = -15.0
+margin_bottom = -20.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer"]
-margin_right = 1900.0
-margin_bottom = 1065.0
+margin_right = 1890.0
+margin_bottom = 1050.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer"]
-margin_right = 1900.0
+margin_right = 1890.0
 margin_bottom = 14.0
 size_flags_vertical = 1
 text = "Quickearch (open) scenes and scipts"
@@ -47,24 +47,28 @@ __meta__ = {
 
 [node name="MarginContainer2" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer"]
 margin_top = 18.0
-margin_right = 1900.0
-margin_bottom = 1026.0
+margin_right = 1890.0
+margin_bottom = 1050.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_constants/margin_top = 20
+custom_constants/margin_top = 10
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2"]
-margin_top = 20.0
-margin_right = 1900.0
-margin_bottom = 1008.0
+margin_top = 10.0
+margin_right = 1890.0
+margin_bottom = 1032.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer"]
-margin_right = 944.0
-margin_bottom = 988.0
+margin_right = 939.0
+margin_bottom = 1022.0
 size_flags_horizontal = 3
 
-[node name="Filter" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer"]
-margin_right = 944.0
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer"]
+margin_right = 939.0
+margin_bottom = 24.0
+
+[node name="Filter" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/HBoxContainer"]
+margin_right = 833.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 50, 0 )
 hint_tooltip = "Starting the search_string with:
@@ -75,29 +79,45 @@ hint_tooltip = "Starting the search_string with:
 \"c \" : lists all OPEN scripts.
 \"s \" : lists all OPEN scenes.
 
-Pressing Ctrl+E while the popup is visible and no filter is applied will switch between the two most recently opened files (opened via this plugin).
+The .tscn has 2 export vars. One decides whether the file-tree's paths will be collapsed,
+if there are too many items (to prevent scrolling). 
+The second decides the color of the file path highlighting. After changing the exported vars you need to save the .tscn 
+and reopen the project or reenable the plugin in the project settings.
+
+Pressing Ctrl+E while the popup is visible, no filter is applied and the filter has the focus 
+(for example when you just opened the popup) will switch between the two most recently opened files (opened with this plugin).
+
 Ending the search_string with \" X\", where X is an integer, will jump to the X-th item in the list."
+size_flags_horizontal = 3
+size_flags_vertical = 3
 clear_button_enabled = true
 placeholder_text = "See this tooltip for filter options..."
 caret_blink = true
 caret_blink_speed = 0.5
 
+[node name="Button" type="Button" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/HBoxContainer"]
+margin_left = 837.0
+margin_right = 939.0
+margin_bottom = 24.0
+size_flags_horizontal = 0
+text = "Copy File Path"
+
 [node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer"]
 margin_top = 28.0
-margin_right = 944.0
-margin_bottom = 988.0
+margin_right = 939.0
+margin_bottom = 1022.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/margin_top = 10
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/MarginContainer"]
 margin_top = 10.0
-margin_right = 944.0
-margin_bottom = 960.0
+margin_right = 939.0
+margin_bottom = 994.0
 
 [node name="ItemList" type="ItemList" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/MarginContainer/HBoxContainer"]
-margin_right = 944.0
-margin_bottom = 950.0
+margin_right = 939.0
+margin_bottom = 984.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -105,25 +125,7 @@ __meta__ = {
 }
 
 [node name="Tree" type="Tree" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer"]
-margin_left = 956.0
-margin_right = 1900.0
-margin_bottom = 988.0
+margin_left = 951.0
+margin_right = 1890.0
+margin_bottom = 1022.0
 size_flags_horizontal = 3
-
-[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer"]
-margin_top = 1030.0
-margin_right = 1900.0
-margin_bottom = 1065.0
-rect_min_size = Vector2( 0, 35 )
-
-[node name="CenterContainer" type="CenterContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer"]
-margin_right = 1900.0
-margin_bottom = 35.0
-
-[node name="Button" type="Button" parent="Panel/MarginContainer/VBoxContainer/MarginContainer/CenterContainer"]
-margin_left = 899.0
-margin_top = 7.0
-margin_right = 1001.0
-margin_bottom = 27.0
-size_flags_horizontal = 0
-text = "Copy File Path"
