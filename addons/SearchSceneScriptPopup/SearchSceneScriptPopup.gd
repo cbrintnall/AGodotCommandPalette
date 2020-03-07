@@ -85,11 +85,11 @@ func _on_item_list_activated(index : int) -> void:
 
 func _on_item_tree_selected() -> void:
 	var file_name = file_tree.get_selected().get_text(0)
-	file_tree.ensure_cursor_is_visible()
 	for item in item_list.get_item_count():
 		if item_list.get_item_text(item).ends_with(file_name):
 			item_list.select(item)
 	_update_tree_colors()
+	item_list.ensure_current_is_visible()
 
 
 func _on_item_tree_activated() -> void:
@@ -206,6 +206,7 @@ func _selection(index : int) -> void:
 	if index != -1:
 		item_list.select(index)
 		call_deferred("_selection_file_tree")
+	item_list.ensure_current_is_visible()
 
 
 func _selection_file_tree() -> void:
@@ -213,6 +214,7 @@ func _selection_file_tree() -> void:
 	if selection:
 		var file_name = item_list.get_item_text(selection[0]).split("  ::  ")[1]
 		file_items[file_name].select(0)
+	file_tree.ensure_cursor_is_visible()
 
 
 func _add_scripts(search_string : String, script_list) -> void:
