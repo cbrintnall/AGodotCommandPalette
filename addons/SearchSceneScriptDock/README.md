@@ -22,3 +22,5 @@ This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to a
 **Installation**:
 
 Either download it from the official Godot AssetLib (within Godot itself) or download the addons folder from GitHub (https://github.com/Leleat/SearchScriptScenePlugin) and move it to the root (res://) of your project. Enable the plugin in the project settings and reopen the project (only needed to do upon enabling the plugin the first time).
+
+![Preview](screenshot_preview.png)
