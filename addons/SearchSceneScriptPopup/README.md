@@ -18,7 +18,6 @@ This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to a
 
 (The filter only applies to the actual file name, so you won't get flooded with search results)
 
-**Beware! Depending on your PC, performance can tank because this plugin scans the entire project structure to list all scripts, scenes and build its file tree (multiple times).** 
 
 **Installation**:
 
