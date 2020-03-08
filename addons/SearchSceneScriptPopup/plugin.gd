@@ -20,6 +20,7 @@ func _on_resource_saved(resource : Resource) -> void:
 	if name.begins_with("SearchSceneScriptPopup"):
 		_cleanup()
 		_initialize() 
+		search_scene_script_popup._update_file_dictionaries(get_editor_interface().get_resource_filesystem().get_filesystem()) 
 
 
 func _initialize() -> void:

@@ -7,9 +7,11 @@ onready var item_list = $Panel/MarginContainer/VBoxContainer/MarginContainer2/HS
 onready var file_tree = $Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/Tree
 onready var copy_path_button =$Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/HBoxContainer/Button
 
-# save the file after you made changes in the inspector; reenable the plugin in the project settings or reopen the project to apply the update 
+# save the file after you made changes in the inspector; reenable the plugin in the project settings or reopen the project to apply the update
+export (Vector2) var popup_size = Vector2(800, 900) 
 export (bool) var collapse_paths_when_full = true # collapse paths when the tree fills the entire popup
 export (Color) var file_tree_selection_color = Color.aquamarine # #80ffd4
+export (bool) var select_file_in_filesystem_dock = true
 
 var scenes : Dictionary # holds all scenes wether they are open or not; Key: file_name, Value: file_path
 var scripts : Dictionary # holds all scripts wether they are open or not; Key: file_name, Value: Scripts
@@ -23,6 +25,16 @@ var INTERFACE : EditorInterface
 var EDITOR : ScriptEditor
 var FILE_SYSTEM : EditorFileSystem
 
+
+# TODO: 
+# seperate scripts and scenes into 2 columns
+# documentation for jumping to the opened file in the filesystem dock
+# add feature: go_to_line in script
+# add feature: Type "?" for help instead of tooltip
+# add feature: listing all signals for the node and its parent classes and auto-paste its code at line X, at  cursor position or file end (?)
+# add feature: code snippets for virtual methods: insert at line X, at  cursor position or file end (?)
+# add feature: low power mode
+# better themeing
 
 func _ready() -> void:
 	_initialize()
@@ -38,7 +50,6 @@ func _initialize() -> void:
 	file_tree.connect("item_selected", self, "_on_item_tree_selected")
 	copy_path_button.connect("pressed", self, "_on_copy_button_pressed")
 	FILE_SYSTEM.connect("filesystem_changed", self, "_on_filesystem_changed")
-	_update_file_dictionaries(FILE_SYSTEM.get_filesystem()) 
 
 
 # global keyboard shortcuts
@@ -52,7 +63,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			_open_scene(scenes[last_file])
 		hide()
 	elif event.as_text() == "Control+E" and event.is_pressed():
-		rect_size = Vector2(800, 900)
+		rect_size = popup_size
 		popup_centered()
 		_update_popup_list()
 
@@ -138,6 +149,8 @@ func _open_script(script : Script) -> void:
 	else:
 		last_file = current_file
 		current_file = script.resource_path.get_file()
+	if select_file_in_filesystem_dock:
+		INTERFACE.select_file(script.resource_path)
 
 
 func _open_scene(path : String) -> void:
@@ -148,6 +161,8 @@ func _open_scene(path : String) -> void:
 	else:
 		last_file = current_file
 		current_file = path.get_file()
+	if select_file_in_filesystem_dock:
+		INTERFACE.select_file(path)
 
 
 # not sure about performance when constantly iterating over the file structures (especially with large number of files)...
