@@ -9,66 +9,35 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+popup_size = Vector2( 800, 700 )
+explain_function = true
 
 [node name="Panel" type="Panel" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
-[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+[node name="MarginContainer2" type="MarginContainer" parent="Panel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 15.0
-margin_top = 10.0
+margin_top = 20.0
 margin_right = -15.0
 margin_bottom = -20.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer"]
+[node name="VBoxContainer2" type="VBoxContainer" parent="Panel/MarginContainer2"]
 margin_right = 1890.0
-margin_bottom = 1050.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer"]
-margin_right = 1890.0
-margin_bottom = 14.0
-size_flags_vertical = 1
-text = "Quickearch (open) scenes and scipts"
-align = 1
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="MarginContainer2" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer"]
-margin_top = 18.0
-margin_right = 1890.0
-margin_bottom = 1050.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_constants/margin_top = 10
-
-[node name="HSplitContainer" type="HSplitContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2"]
-margin_top = 10.0
-margin_right = 1890.0
-margin_bottom = 1032.0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer"]
-margin_right = 939.0
-margin_bottom = 1022.0
+margin_bottom = 1040.0
 size_flags_horizontal = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer"]
-margin_right = 939.0
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer2/VBoxContainer2"]
+margin_right = 1890.0
 margin_bottom = 24.0
 
-[node name="Filter" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/HBoxContainer"]
-margin_right = 833.0
+[node name="Filter" type="LineEdit" parent="Panel/MarginContainer2/VBoxContainer2/HBoxContainer"]
+margin_right = 1784.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 50, 0 )
 hint_tooltip = "Starting the search_string with:
@@ -91,41 +60,33 @@ Ending the search_string with \" X\", where X is an integer, will jump to the X-
 size_flags_horizontal = 3
 size_flags_vertical = 3
 clear_button_enabled = true
-placeholder_text = "See this tooltip for filter options..."
+placeholder_text = "Type '?' to get help."
 caret_blink = true
 caret_blink_speed = 0.5
 
-[node name="Button" type="Button" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/HBoxContainer"]
-margin_left = 837.0
-margin_right = 939.0
+[node name="Button" type="Button" parent="Panel/MarginContainer2/VBoxContainer2/HBoxContainer"]
+margin_left = 1788.0
+margin_right = 1890.0
 margin_bottom = 24.0
+hint_tooltip = "Copies the file path if the selected file is a script or a scene. If the selection is a code snippet, the entire function gets copied."
 size_flags_horizontal = 0
-text = "Copy File Path"
+text = "Copy Info"
 
-[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer2/VBoxContainer2"]
 margin_top = 28.0
-margin_right = 939.0
-margin_bottom = 1022.0
-size_flags_horizontal = 3
+margin_right = 1890.0
+margin_bottom = 1040.0
 size_flags_vertical = 3
 custom_constants/margin_top = 10
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/MarginContainer"]
-margin_top = 10.0
-margin_right = 939.0
-margin_bottom = 994.0
-
-[node name="ItemList" type="ItemList" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer/VBoxContainer/MarginContainer/HBoxContainer"]
-margin_right = 939.0
-margin_bottom = 984.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Tree" type="Tree" parent="Panel/MarginContainer/VBoxContainer/MarginContainer2/HSplitContainer"]
-margin_left = 951.0
+[node name="ItemList" type="ItemList" parent="Panel/MarginContainer2/VBoxContainer2/MarginContainer"]
+margin_top = 10.0
 margin_right = 1890.0
-margin_bottom = 1022.0
-size_flags_horizontal = 3
+margin_bottom = 1012.0
+max_columns = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}

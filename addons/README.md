@@ -18,9 +18,10 @@ This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to a
 
 (The filter only applies to the actual file name, so you won't get flooded with search results)
 
+**Beware! Depending on your PC, performance can tank because this plugin scans the entire project structure to list all scripts, scenes and build its file tree (multiple times).** 
 
 **Installation**:
 
 Either download it from the official Godot AssetLib (within Godot itself) or download the addons folder from GitHub (https://github.com/Leleat/SearchScriptScenePlugin) and move it to the root (res://) of your project. Enable the plugin in the project settings.
 
-![Preview](screenshot_preview.png)
+![Preview](SearchSceneScriptPopup/assets/screenshot_preview.png)
