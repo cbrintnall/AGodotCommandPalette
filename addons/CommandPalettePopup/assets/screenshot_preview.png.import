@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/icon.png-68d5a849ad520a4a3e475a44825f82e6.stex"
+path="res://.import/screenshot_preview.png-57fed0848fb11efbd9100288ddc6bc18.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/SearchSceneScriptPopup/icon.png"
-dest_files=[ "res://.import/icon.png-68d5a849ad520a4a3e475a44825f82e6.stex" ]
+source_file="res://addons/CommandPalettePopup/assets/screenshot_preview.png"
+dest_files=[ "res://.import/screenshot_preview.png-57fed0848fb11efbd9100288ddc6bc18.stex" ]
 
 [params]
 
