@@ -9,7 +9,7 @@ onready var info_box = $PanelContainer/Panel/MarginContainer/Content/VBoxContain
 
 # after making changes in the inspector turn the plugin off and then on again in the project settings or reopen the project to apply the changes
 export (Vector2) var max_popup_size = Vector2(900, 700)
-export (String) var keyboard_shortcut = "Control+E" # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a shortcut looks as a String
+export (String) var keyboard_shortcut = "Control+E" # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a shortcut looks as a String 
 export (Color) var secondary_color = Color(1, 1, 1, .3) # color for 3rd column
 export (bool) var adapt_popup_height = true
 
@@ -17,13 +17,19 @@ var current_file # file names as String
 var last_file  # switch between last 2 files opened with this plugin
 var files_are_updating = false
 var files : Dictionary # holds ALL scenes and scripts with different properties, see _update_files_dictionary()
-enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, HELP}
+enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SIGNALS}
+var types = ["null", "bool", "int", "float", "String", "Vector2", "Rect2", "Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", \
+		"Transform", "Color", "NodePath", "RID", "Object", "Dictionary", "Array", "PoolByteArray", "PoolIntArray", "PoolRealArray", \
+		"PoolStringArray", "PoolVector2Array", "PoolVector3Array", "PoolColorArray", "Variant"] # for type hints for vars when using "sig " keyword
 var code_snippets : ConfigFile = ConfigFile.new()
 
 var PLUGIN : EditorPlugin
 var INTERFACE : EditorInterface
 var EDITOR : ScriptEditor
 var FILE_SYSTEM : EditorFileSystem
+
+
+# TODO: refactor
 
 
 func _ready() -> void:
@@ -48,6 +54,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		hide()
 		
 	elif event.as_text() == keyboard_shortcut and event.pressed:
+		rect_size = max_popup_size
 		popup_centered()
 		filter.grab_focus()
 		_update_popup_list()
@@ -90,7 +97,7 @@ func _on_copy_button_pressed() -> void:
 			OS.clipboard = code_snippets.get_value(snippet_name, "signature")
 			OS.clipboard += code_snippets.get_value(snippet_name, "type_hint") if use_type_hints else code_snippets.get_value(snippet_name, "no_type_hint")
 		else:
-			if selection[0] % item_list.max_columns == 1: # selection is a file name
+			if selection[0] % item_list.max_columns == 1 and not filter.text.begins_with("sig ") and not filter.text.begins_with(": "): # selection is a file name
 				var path = files[item_list.get_item_text(selection[0]).strip_edges()].File_Path
 				OS.clipboard = "\"" + path + "\""
 	hide()
@@ -115,6 +122,8 @@ func _on_item_list_activated(index : int) -> void:
 			var max_lines = EDITOR.get_current_script().source_code.count("\n")
 			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
 			INTERFACE.call_deferred("set_main_screen_editor", "Script")
+	elif filter.text.begins_with("sig "):
+		_paste_signal(selected_name)
 	elif index % item_list.max_columns == 1: # file names
 		_open_selection(selected_name)
 	elif index % item_list.max_columns == 2: # file paths 
@@ -124,6 +133,7 @@ func _on_item_list_activated(index : int) -> void:
 
 
 func _on_filter_text_changed(new_txt : String) -> void:
+	rect_size = max_popup_size
 	_update_popup_list()
 
 
@@ -138,7 +148,9 @@ func _on_filter_text_entered(new_txt : String) -> void:
 	if selection:
 		var selected_name = item_list.get_item_text(selection[0]).strip_edges()
 		if filter.text.begins_with("_ "): # code snippets
-				_paste_code_snippet(selected_name, item_list.get_meta("snippet_at_end"))
+			_paste_code_snippet(selected_name, item_list.get_meta("snippet_at_end"))
+		elif filter.text.begins_with("sig "):
+			_paste_signal(selected_name)
 		else:
 			_open_selection(selected_name) # file
 	hide()
@@ -198,7 +210,6 @@ func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool =
 
 
 func _update_popup_list() -> void:
-	rect_size = max_popup_size
 	item_list.clear()
 	item_list.visible = true
 	info_box.bbcode_text = "No info..."
@@ -232,6 +243,9 @@ func _update_popup_list() -> void:
 			max_lines = EDITOR.get_current_script().source_code.count("\n")
 		item_list.add_item("Go to line: %s" % (clamp(number as int, 1, max_lines) if number.is_valid_integer() else "Enter valid number."))
 		return
+		
+	elif search_string.begins_with("sig "):
+		_build_item_list(search_string.substr(4).strip_edges(), FILTER.SIGNALS)
 		
 	elif search_string.begins_with("_ "): # show code snippets
 		_build_method_list(search_string.substr(2).strip_edges(), snippet_at_end)
@@ -312,6 +326,39 @@ func _build_item_list(search_string : String, special_filter : int = -1) -> void
 				else:
 					list.push_back(script_name)
 			
+		FILTER.SIGNALS:
+			var scene = load(EDITOR.get_current_script().get_meta("Scene_Path")).instance()
+			var counter = 0
+			for signals in scene.get_signal_list():
+				if search_string:
+					if signals.name.findn(search_string) != -1:
+						item_list.add_item(" " + String(counter) + "  :: ", null, false)
+						item_list.add_item(signals.name)
+						if signals.args:
+							item_list.add_item("(") 
+							var current_item = item_list.get_item_count() - 1
+							for arg_index in signals.args.size():
+								item_list.set_item_text(current_item, item_list.get_item_text(current_item) + signals.args[arg_index].name + " : " + (signals.args[arg_index].get("class_name") if signals.args[arg_index].get("class_name") else types[signals.args[arg_index].type]) + (", " if arg_index < signals.args.size() - 1 else ""))
+							item_list.set_item_text(current_item, item_list.get_item_text(current_item) + ")") 
+							item_list.set_item_disabled(current_item, true)
+						else:
+							item_list.add_item("", null, false)
+						counter += 1
+				else:
+					item_list.add_item(" " + String(counter) + "  :: ", null, false)
+					item_list.add_item(signals.name)
+					if signals.args:
+						item_list.add_item("(") 
+						var current_item = item_list.get_item_count() - 1
+						for arg_index in signals.args.size():
+								item_list.set_item_text(current_item, item_list.get_item_text(current_item) + signals.args[arg_index].name + " : " + (signals.args[arg_index].get("class_name") if signals.args[arg_index].get("class_name") else types[signals.args[arg_index].type]) + (", " if arg_index < signals.args.size() - 1 else ""))
+						item_list.set_item_text(current_item, item_list.get_item_text(current_item) + ")") 
+						item_list.set_item_disabled(current_item, true)
+					else:
+						item_list.add_item("", null, false)
+					counter += 1
+			scene.free()
+			
 		_:
 			var open_scenes = INTERFACE.get_open_scenes()
 			for path in open_scenes:
@@ -341,6 +388,7 @@ func _build_item_list(search_string : String, special_filter : int = -1) -> void
 		
 	_adapt_list_height()
 
+
 func _adapt_list_height() -> void:
 	if adapt_popup_height:
 		var row_height = 16 + 12 # icon size + (estimated) margin
@@ -348,7 +396,6 @@ func _adapt_list_height() -> void:
 		var margin = 85 # for search box and margin containers
 		var height = row_height * rows + margin
 		rect_size.y = clamp(height, row_height + margin, max_popup_size.y)
-	
 
 
 func _build_help() -> void:
@@ -385,16 +432,30 @@ func _build_info_box(snippet_name : String) -> void:
 		info_box.visible = true
 
 
-func _paste_code_snippet(snippet_name : String, insert_at_end : bool) -> void:
-	var TextEdit_index = 0
+func _paste_signal(signal_name : String) -> void:
+	var script_index = 0
 	for script in EDITOR.get_open_scripts():
 		if script == EDITOR.get_current_script():
 			break
-		TextEdit_index += 1
-	var code_editor = EDITOR.get_child(0).get_child(1).get_child(1).get_child(TextEdit_index).get_child(0).get_child(0).get_child(0) # TextEdit of current script
+		script_index += 1
+	var code_editor = EDITOR.get_child(0).get_child(1).get_child(1).get_child(script_index).get_child(0).get_child(0).get_child(0) # TextEdit of current script
+	var node_name = EDITOR.get_current_script().resource_path.get_file().get_basename()
+	var snippet = "connect(\"%s\", , \"_on_%s_%s\")" % [signal_name, node_name, signal_name]
+	code_editor.insert_text_at_cursor(snippet)
+	var new_column = code_editor.cursor_get_column() - signal_name.length() - EDITOR.get_current_script().resource_path.get_file().get_basename().length() - 10 # 10 = "_on_...."
+	code_editor.cursor_set_column(new_column)
+	OS.clipboard = "func _on_%s_%s():\n\tpass" % [node_name, signal_name]
+
+
+func _paste_code_snippet(snippet_name : String, insert_at_end : bool) -> void:
+	var script_index = 0
+	for script in EDITOR.get_open_scripts():
+		if script == EDITOR.get_current_script():
+			break
+		script_index += 1
+	var code_editor = EDITOR.get_child(0).get_child(1).get_child(1).get_child(script_index).get_child(0).get_child(0).get_child(0) # TextEdit of current script
 	var use_type_hints = INTERFACE.get_editor_settings().get_setting("text_editor/completion/add_type_hints")
-	var code_snippet = ""
-	code_snippet +=  code_snippets.get_value(snippet_name, "signature")
+	var code_snippet = code_snippets.get_value(snippet_name, "signature")
 	code_snippet += code_snippets.get_value(snippet_name, "type_hint") if use_type_hints else code_snippets.get_value(snippet_name, "no_type_hint")
 	if insert_at_end:
 		EDITOR.goto_line(code_editor.get_line_count() - 1)
