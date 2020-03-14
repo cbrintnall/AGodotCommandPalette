@@ -1,22 +1,22 @@
 [color=aqua]All open scripts and scenes[/color] will be shown by default.
 
-[color=aqua]Starting[/color] the search_string with [color=aqua]"c "[/color] (c for code) will show the open scripts.
-[color=aqua]Starting[/color] the search_string with [color=aqua]"s "[/color] (s for scene) will show the open scenes.
-[color=aqua]Starting[/color] the search_string with [color=aqua]"a "[/color] (a for all) will show all scripts and scenes.
-[color=aqua]Starting[/color] the search_string with [color=aqua]"ac "[/color] (or ca) will show all scripts.
-[color=aqua]Starting[/color] the search_string with [color=aqua]"as "[/color] (or sa) will show all scenes.
-[color=aqua]Starting[/color] the search_string with [color=aqua]": "[/color] followed by a valid integer will jump to that line in the script editor.
-[color=aqua]Starting[/color] the search_string with [color=aqua]"_ "[/color] will show the available code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. Follow the key naming scheme. Take a look at _paste_code_snippet(), if you want to know how the snippet parts are merged. By default a few virtual methods are implemented.
+[color=aqua]c  [/color] (c for code) will show the open scripts.
+[color=aqua]s  [/color] (s for scene) will show the open scenes.
+[color=aqua]a  [/color] (a for all) will show all scripts and scenes.
+[color=aqua]ac  [/color] (or ca) will show all scripts.
+[color=aqua]as  [/color] (or sa) will show all scenes.
+[color=aqua]:  [/color] followed by a valid integer will jump to that line in the script editor.
+[color=aqua]_  [/color] will show the available code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. Follow the key naming scheme. Take a look at _paste_code_snippet(), if you want to know how the snippet parts are merged. By default a few virtual methods are implemented.
+[color=aqua]_  [/color] whatever_filter [color=aqua]  e[/color] (for ex. "_ ready e") will insert the selected snippet at the end of the script.
 
-[color=aqua]Ending[/color] the search_string with [color=aqua]" X"[/color], where X is an integer, will jump to the X-th item in the list.
-[color=aqua]Ending[/color] the search_string with [color=aqua]" e"[/color] when using the code snippets, will insert the snippet at the end of the file (instead of at the cursor position).
+[color=aqua]Ending[/color] the search_string with [color=aqua]  X[/color] (but before the " e" for snippets), where X is an integer, will jump to the X-th item in the list.
 
-[color=aqua]Opening a script[/color] will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
+Opening a script will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
 
-[color=aqua]Activating the file path[/color] will jump to the file in the filesystem dock.
+Activating the file path will jump to the file in the filesystem dock.
 
-While the popup is visible, [color=aqua]pressing the shortcut again[/color] will switch to the last file opened with this plugin. Scene files (.tscn) should have the same name as the scene root (which is the default setting in Godot).
+While the popup is visible, pressing the shortcut again will switch to the last file opened with this plugin. Scene files (.tscn) should have the same name as the scene root (which is the default setting in Godot).
 
-Pressing the [color=aqua]copy button[/color] while a file name is selected, will copy the path to the file to the clipboard. If a code snippet is selected, the snippet will be copied to the clipboard.
+Pressing the copy button while a file name is selected, will copy the path to the file to the clipboard. If a code snippet is selected, the snippet will be copied to the clipboard.
 
-Some [color=aqua]export vars[/color] are available. Reopen the project after changing those or other things in the inspector of this plugin.
+Some export vars are available. Reopen the project after changing those or other things in the inspector of this plugin.
