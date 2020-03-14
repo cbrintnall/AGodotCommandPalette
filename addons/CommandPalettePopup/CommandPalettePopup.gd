@@ -32,7 +32,6 @@ func _ready() -> void:
 	item_list.connect("item_activated", self, "_on_item_list_activated")
 	item_list.connect("item_selected", self, "_on_item_list_selected")
 	copy_path_button.connect("pressed", self, "_on_copy_button_pressed")
-	FILE_SYSTEM.connect("filesystem_changed", self, "_on_filesystem_changed")
 	PLUGIN.connect("main_screen_changed", self, "_on_main_screen_changed")
 		
 	var error = code_snippets.load("res://addons/CommandPalettePopup/CodeSnippets.cfg")
@@ -55,7 +54,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 
 func _on_main_screen_changed(new_screen : String) -> void:
-# set current_file; only once on startup of the project:
+# set current_file; only during startup of the project:
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 	for path in INTERFACE.get_open_scenes():
@@ -68,6 +67,9 @@ func _on_main_screen_changed(new_screen : String) -> void:
 			break
 	if PLUGIN.is_connected("main_screen_changed", self, "_on_main_screen_changed"):
 		PLUGIN.disconnect("main_screen_changed", self, "_on_main_screen_changed")
+	if not FILE_SYSTEM.is_connected("filesystem_changed", self, "_on_filesystem_changed"):
+		_update_files_dictionary(FILE_SYSTEM.get_filesystem(), true)
+		FILE_SYSTEM.connect("filesystem_changed", self, "_on_filesystem_changed")
 
 
 func _on_filesystem_changed() -> void:
