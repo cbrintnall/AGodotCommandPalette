@@ -9,6 +9,7 @@
 [color=aqua]Starting[/color] the search_string with [color=aqua]"_ "[/color] will show the available code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. Follow the key naming scheme. Take a look at _paste_code_snippet(), if you want to know how the snippet parts are merged. By default a few virtual methods are implemented.
 
 [color=aqua]Ending[/color] the search_string with [color=aqua]" X"[/color], where X is an integer, will jump to the X-th item in the list.
+[color=aqua]Ending[/color] the search_string with [color=aqua]" e"[/color] when using the code snippets, will insert the snippet at the end of the file (instead of at the cursor position).
 
 [color=aqua]Opening a script[/color] will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
 

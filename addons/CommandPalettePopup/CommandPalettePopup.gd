@@ -8,9 +8,10 @@ onready var copy_path_button =$PanelContainer/Panel/MarginContainer/Content/VBox
 onready var info_box = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/MarginContainer/HSplitContainer/RightInfoBox
 
 # after making changes in the inspector turn the plugin off and then on again in the project settings or reopen the project to apply the changes
-export (Vector2) var popup_size
-export (String) var keyboard_shortcut # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a shortcut looks as a String
+export (Vector2) var max_popup_size = Vector2(900, 700)
+export (String) var keyboard_shortcut = "Control+E" # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a shortcut looks as a String
 export (Color) var secondary_color = Color(1, 1, 1, .3) # color for 3rd column
+export (bool) var adapt_popup_height = true
 
 var current_file # file names as String
 var last_file  # switch between last 2 files opened with this plugin
@@ -47,7 +48,6 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		hide()
 		
 	elif event.as_text() == keyboard_shortcut and event.pressed:
-		rect_size = popup_size
 		popup_centered()
 		filter.grab_focus()
 		_update_popup_list()
@@ -108,7 +108,13 @@ func _on_item_list_selected(index : int) -> void:
 func _on_item_list_activated(index : int) -> void:
 	var selected_name = item_list.get_item_text(index).strip_edges()
 	if filter.text.begins_with("_ "): # code snippets
-		_paste_code_snippet(selected_name)
+		_paste_code_snippet(selected_name, item_list.get_meta("snippet_at_end"))
+	elif filter.text.begins_with(": "): # go to line
+		var number = filter.text.substr(2).strip_edges()
+		if number.is_valid_integer():
+			var max_lines = EDITOR.get_current_script().source_code.count("\n")
+			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
+			INTERFACE.call_deferred("set_main_screen_editor", "Script")
 	elif index % item_list.max_columns == 1: # file names
 		_open_selection(selected_name)
 	elif index % item_list.max_columns == 2: # file paths 
@@ -122,11 +128,17 @@ func _on_filter_text_changed(new_txt : String) -> void:
 
 
 func _on_filter_text_entered(new_txt : String) -> void:
+	if filter.text.begins_with(": "): # go to line
+		var number = filter.text.substr(2).strip_edges()
+		if number.is_valid_integer():
+			var max_lines = EDITOR.get_current_script().source_code.count("\n")
+			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
+			INTERFACE.call_deferred("set_main_screen_editor", "Script")
 	var selection = item_list.get_selected_items()
 	if selection:
 		var selected_name = item_list.get_item_text(selection[0]).strip_edges()
 		if filter.text.begins_with("_ "): # code snippets
-				_paste_code_snippet(selected_name)
+				_paste_code_snippet(selected_name, item_list.get_meta("snippet_at_end"))
 		else:
 			_open_selection(selected_name) # file
 	hide()
@@ -186,11 +198,17 @@ func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool =
 
 
 func _update_popup_list() -> void:
+	rect_size = max_popup_size
 	item_list.clear()
 	item_list.visible = true
 	info_box.bbcode_text = "No info..."
 	info_box.visible = false
 	var search_string = filter.text
+	
+	var snippet_at_end = false
+	if search_string.begins_with("_ ") and search_string.ends_with(" e"):
+		snippet_at_end = true
+		search_string = search_string.substr(0, search_string.length() - 1 if search_string.length() == 3 else search_string.length() - 2)
 		
 	# typing " X" at the end of the search_string jumps to the X-th item in the list
 	var quickselect_line = 0
@@ -208,13 +226,15 @@ func _update_popup_list() -> void:
 		
 	elif search_string.begins_with(": "): # go to line 
 		var number = search_string.substr(2).strip_edges()
+		_adapt_list_height()
+		var max_lines = 0
 		if number.is_valid_integer():
-			var max_lines = EDITOR.get_current_script().source_code.count("\n")
-			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
+			max_lines = EDITOR.get_current_script().source_code.count("\n")
+		item_list.add_item("Go to line: %s" % (clamp(number as int, 1, max_lines) if number.is_valid_integer() else "Enter valid number."))
 		return
 		
 	elif search_string.begins_with("_ "): # show code snippets
-		_build_method_list(search_string.substr(2).strip_edges())
+		_build_method_list(search_string.substr(2).strip_edges(), snippet_at_end)
 		
 	elif search_string.begins_with("a "): # show all scripts and scenes
 		_build_item_list(search_string.substr(2).strip_edges(), FILTER.ALL_SCENES_AND_SCRIPTS)
@@ -318,6 +338,17 @@ func _build_item_list(search_string : String, special_filter : int = -1) -> void
 		var file_path = files[list[index]].File_Path.get_base_dir()
 		item_list.add_item(" - " + file_path.substr(0, 6) + " - " + file_path.substr(6).replace("/", " - "))
 		item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+		
+	_adapt_list_height()
+
+func _adapt_list_height() -> void:
+	if adapt_popup_height:
+		var row_height = 16 + 12 # icon size + (estimated) margin
+		var rows = item_list.get_item_count() / item_list.max_columns
+		var margin = 85 # for search box and margin containers
+		var height = row_height * rows + margin
+		rect_size.y = clamp(height, row_height + margin, max_popup_size.y)
+	
 
 
 func _build_help() -> void:
@@ -327,8 +358,9 @@ func _build_help() -> void:
 	file.close()
 
 
-func _build_method_list(filtered_name : String) -> void:
+func _build_method_list(filtered_name : String, snippet_at_end : bool) -> void:
 	var counter = 0
+	item_list.set_meta("snippet_at_end", true) if snippet_at_end else item_list.set_meta("snippet_at_end", false)
 	for method_name in code_snippets.get_sections():
 		if filtered_name:
 			if method_name.findn(filtered_name) != -1:
@@ -353,7 +385,7 @@ func _build_info_box(snippet_name : String) -> void:
 		info_box.visible = true
 
 
-func _paste_code_snippet(snippet_name : String) -> void:
+func _paste_code_snippet(snippet_name : String, insert_at_end : bool) -> void:
 	var TextEdit_index = 0
 	for script in EDITOR.get_open_scripts():
 		if script == EDITOR.get_current_script():
@@ -364,7 +396,9 @@ func _paste_code_snippet(snippet_name : String) -> void:
 	var code_snippet = ""
 	code_snippet +=  code_snippets.get_value(snippet_name, "signature")
 	code_snippet += code_snippets.get_value(snippet_name, "type_hint") if use_type_hints else code_snippets.get_value(snippet_name, "no_type_hint")
-	code_editor.insert_text_at_cursor(code_snippet)
+	if insert_at_end:
+		EDITOR.goto_line(code_editor.get_line_count() - 1)
+	code_editor.call_deferred("insert_text_at_cursor", code_snippet)
 # Alternative way of snippet implementation: copy to clipboard and creating Ctrl+V InputEvent
 #	var old_clipboard = OS.clipboard 
 #	OS.clipboard = ""
@@ -372,6 +406,10 @@ func _paste_code_snippet(snippet_name : String) -> void:
 #	var use_type_hints = INTERFACE.get_editor_settings().get_setting("text_editor/completion/add_type_hints")
 #	OS.clipboard +=  code_snippets.get_value(snippet_name, "signature")
 #	OS.clipboard += code_snippets.get_value(snippet_name, "type_hint") if use_type_hints else code_snippets.get_value(snippet_name, "no_type_hint")
+#	
+#	if insert_at_end:
+#		var max_lines = EDITOR.get_current_script().source_code.count("\n")
+#		EDITOR.goto_line(max_lines)
 #
 #	call_deferred("_paste_helper_method", old_clipboard)
 #
