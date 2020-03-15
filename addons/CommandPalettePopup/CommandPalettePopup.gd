@@ -2,7 +2,7 @@ tool
 extends Popup
 
 
-onready var filter = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/SearchFilter/Filter
+onready var filter = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/SearchFilter/MarginContainer/Filter
 onready var item_list = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/MarginContainer/HSplitContainer/ItemList
 onready var copy_path_button =$PanelContainer/Panel/MarginContainer/Content/VBoxContainer/SearchFilter/CopyButton
 onready var info_box = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/MarginContainer/HSplitContainer/RightInfoBox
@@ -18,7 +18,7 @@ var last_file  # switch between last 2 files opened with this plugin
 var files_are_updating = false
 var files : Dictionary # holds ALL scenes and scripts with different properties, see _update_files_dictionary()
 enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SIGNALS}
-var types = ["null", "bool", "int", "float", "String", "Vector2", "Rect2", "Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", \
+var types = ["-", "bool", "int", "float", "String", "Vector2", "Rect2", "Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", \
 		"Transform", "Color", "NodePath", "RID", "Object", "Dictionary", "Array", "PoolByteArray", "PoolIntArray", "PoolRealArray", \
 		"PoolStringArray", "PoolVector2Array", "PoolVector3Array", "PoolColorArray", "Variant"] # for type hints for vars when using "sig " keyword
 var code_snippets : ConfigFile = ConfigFile.new()
@@ -40,6 +40,9 @@ func _ready() -> void:
 	item_list.connect("item_selected", self, "_on_item_list_selected")
 	copy_path_button.connect("pressed", self, "_on_copy_button_pressed")
 	PLUGIN.connect("main_screen_changed", self, "_on_main_screen_changed")
+		
+	$PanelContainer/Panel.set("custom_styles/panel", INTERFACE.get_base_control().get_stylebox("Content", "EditorStyles"))
+	filter.right_icon = INTERFACE.get_base_control().get_icon("Search", "EditorIcons")
 		
 	var error = code_snippets.load("res://addons/CommandPalettePopup/CodeSnippets.cfg")
 	if error != OK:
