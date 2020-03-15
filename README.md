@@ -5,8 +5,8 @@ This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to a
 
 **Features**:
 
-- Pressing Ctrl+E opens a popup, which lists all open scenes and scripts.
-- Pressing Ctrl+E while the popup is already open and no filter is applied will switch to the previously opened file (only works for files opened with this plugin).
+- Pressing Ctrl+P (Command+P) opens a popup, which lists all open scenes and scripts.
+- Pressing Ctrl+P (Command+P) while the popup is already open and no filter is applied will switch to the previously opened file (only works for files opened with this plugin).
 - The file names are preceded by a line number and followed by their file path. Activating the file path will select the file in the filesystem dock.
 - Ending the search_string with \" X\", where X is an integer, jumps to the X-th line in the list.
 - Starting the search_string with \"a \" (a for all) will show ALL scripts and scenes.

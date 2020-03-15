@@ -8,10 +8,10 @@ onready var copy_path_button =$PanelContainer/Panel/MarginContainer/Content/VBox
 onready var info_box = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/MarginContainer/HSplitContainer/RightInfoBox
 
 # after making changes in the inspector turn the plugin off and then on again in the project settings or reopen the project to apply the changes
-export (Vector2) var max_popup_size = Vector2(900, 700)
-export (String) var keyboard_shortcut = "Control+E" # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a shortcut looks as a String 
 export (Color) var secondary_color = Color(1, 1, 1, .3) # color for 3rd column
 export (bool) var adapt_popup_height = true
+var keyboard_shortcut = "Command+P" if OS.get_name() == "OSX" else "Control+P" # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a shortcut looks as a String 
+var max_popup_size = Vector2(clamp(1000 * (OS.get_screen_dpi() / 100), 500, OS.get_screen_size().x / 2), OS.get_screen_size().y / 2) 
 
 var current_file # file names as String
 var last_file  # switch between last 2 files opened with this plugin
@@ -277,6 +277,8 @@ func _update_popup_list() -> void:
 		item_list.ensure_current_is_visible()
 		if filter.text.begins_with("_ "): # code snippets
 			_build_info_box(item_list.get_item_text(item_list.get_selected_items()[0]).strip_edges())
+		
+	_adapt_list_height()
 
 
 func _build_item_list(search_string : String, special_filter : int = -1) -> void:
@@ -388,17 +390,16 @@ func _build_item_list(search_string : String, special_filter : int = -1) -> void
 		var file_path = files[list[index]].File_Path.get_base_dir()
 		item_list.add_item(" - " + file_path.substr(0, 6) + " - " + file_path.substr(6).replace("/", " - "))
 		item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
-		
-	_adapt_list_height()
 
 
 func _adapt_list_height() -> void:
 	if adapt_popup_height:
-		var row_height = 16 + 12 # icon size + (estimated) margin
-		var rows = item_list.get_item_count() / item_list.max_columns
-		var margin = 85 # for search box and margin containers
+		var script_icon = INTERFACE.get_base_control().get_icon("Script", "EditorIcons")
+		var row_height = script_icon.get_size().y + (8 * (OS.get_screen_dpi() / 100))
+		var rows = item_list.get_item_count() / item_list.max_columns + 1
+		var margin = filter.rect_size.y + $PanelContainer/Panel/MarginContainer.margin_top + abs($PanelContainer/Panel/MarginContainer.margin_bottom) + $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/MarginContainer.get("custom_constants/margin_top")
 		var height = row_height * rows + margin
-		rect_size.y = clamp(height, row_height + margin, max_popup_size.y)
+		rect_size.y = clamp(height, 0, max_popup_size.y)
 
 
 func _build_help() -> void:
@@ -489,3 +490,9 @@ func _paste_code_snippet(snippet_name : String, insert_at_end : bool) -> void:
 #	Input.parse_input_event(paste_key_combo)
 #
 #	OS.clipboard = old_clipboard
+func test():
+	var paste_key_combo = InputEventKey.new()
+	paste_key_combo.command = true
+	paste_key_combo.scancode = KEY_V
+	paste_key_combo.pressed = true
+	Input.parse_input_event(paste_key_combo)
