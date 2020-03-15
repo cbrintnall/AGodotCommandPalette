@@ -17,7 +17,7 @@ var current_file # file names as String
 var last_file  # switch between last 2 files opened with this plugin
 var files_are_updating = false
 var files : Dictionary # holds ALL scenes and scripts with different properties, see _update_files_dictionary()
-enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SIGNALS}
+enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SIGNALS}
 var types = ["-", "bool", "int", "float", "String", "Vector2", "Rect2", "Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", \
 		"Transform", "Color", "NodePath", "RID", "Object", "Dictionary", "Array", "PoolByteArray", "PoolIntArray", "PoolRealArray", \
 		"PoolStringArray", "PoolVector2Array", "PoolVector3Array", "PoolColorArray", "Variant"] # for type hints for vars when using "sig " keyword
@@ -247,7 +247,7 @@ func _update_popup_list() -> void:
 		item_list.add_item("Go to line: %s" % (clamp(number as int, 1, max_lines) if number.is_valid_integer() else "Enter valid number."))
 		return
 		
-	elif search_string.begins_with("sig "):
+	elif search_string.begins_with("sig "): # show signals
 		_build_item_list(search_string.substr(4).strip_edges(), FILTER.SIGNALS)
 		
 	elif search_string.begins_with("_ "): # show code snippets
@@ -262,14 +262,14 @@ func _update_popup_list() -> void:
 	elif search_string.begins_with("as ") or search_string.begins_with("sa "): # show all scenes
 		_build_item_list(search_string.substr(3).strip_edges(), FILTER.ALL_SCENES)
 		
-	elif search_string.begins_with("c "): # show open scripts
-		_build_item_list(search_string.substr(2).strip_edges(), FILTER.ALL_OPEN_SCRIPTS)
+	elif search_string.begins_with("cs ") or search_string.begins_with("cs "): # show open scenes and scripts
+		_build_item_list(search_string.substr(3).strip_edges(), FILTER.ALL_OPEN_SCENES_SCRIPTS)
 		
 	elif search_string.begins_with("s "): # show open scenes
 		_build_item_list(search_string.substr(2).strip_edges(), FILTER.ALL_OPEN_SCENES)
 		
-	else: # show all open scenes and scripts
-		_build_item_list(search_string.strip_edges())
+	else: # show all open scripts
+		_build_item_list(search_string.strip_edges(), FILTER.ALL_OPEN_SCRIPTS)
 		
 	quickselect_line = clamp(quickselect_line as int, 0, item_list.get_item_count() / item_list.max_columns - 1)
 	if item_list.get_item_count() > 0:
@@ -364,7 +364,7 @@ func _build_item_list(search_string : String, special_filter : int = -1) -> void
 					counter += 1
 			scene.free()
 			
-		_:
+		FILTER.ALL_OPEN_SCENES_SCRIPTS:
 			var open_scenes = INTERFACE.get_open_scenes()
 			for path in open_scenes:
 				var scene_name = path.get_file()
