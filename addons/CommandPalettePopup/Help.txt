@@ -5,9 +5,9 @@
 [color=aqua]ac  [/color] (or ca, c for code) will show all scripts.
 [color=aqua]as  [/color] (or sa) will show all scenes.
 [color=aqua]cs  [/color] (or sc) will show the open scripts and scenes.
-[color=aqua]:  [/color] followed by a valid integer will jump to that line in the script editor.
-[color=aqua]sig  [/color] will list all signals of the current scene root. Activating a signal will insert it at the cursor position with the cursor position moving to the signal target. The signal method will be copied to the clipboard.
-[color=aqua]_  [/color] will show the available code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. Follow the key naming scheme. Take a look at _paste_code_snippet(), if you want to know how the snippet parts are merged. By default a few virtual methods are implemented.
+[color=aqua]:  [/color] followed by a number will jump to that line in the script editor when activating the filter or ending the search_string with a space.
+[color=aqua]sig  [/color] will list all signals of the current scene root. Activating a signal will insert the signal connection at the cursor position with the cursor position moving to the signal target. The signal method will be copied to the clipboard.
+[color=aqua]_  [/color] will show the code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. The sections are the names shown in the item_list. "signature" is the only section key, which has to be defined. It can be whatever you want to eventually paste. By default a few virtual methods are implemented.
 [color=aqua]_  [/color] whatever_filter [color=aqua]  e[/color] (for ex. "_ ready e") will insert the selected snippet at the end of the script.
 
 [color=aqua]Ending[/color] the search_string with [color=aqua]  X[/color] (but before the " e" for snippets), where X is an integer, will jump to the X-th item in the list.
