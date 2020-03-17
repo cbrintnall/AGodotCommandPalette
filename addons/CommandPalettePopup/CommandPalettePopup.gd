@@ -184,10 +184,16 @@ func _open_selection(selected_name : String) -> void:
 
 
 func _open_script(script : Script) -> void:
+	INTERFACE.edit_resource(script)
+		
 	if script.has_meta("Scene_Path"):
 		INTERFACE.open_scene_from_path(script.get_meta("Scene_Path"))
+		var selection = INTERFACE.get_selection()
+		selection.clear()
+		selection.add_node(INTERFACE.get_edited_scene_root())
+		yield(get_tree(), "idle_frame")
+		yield(get_tree(), "idle_frame")
 		
-	INTERFACE.edit_resource(script)
 	INTERFACE.call_deferred("set_main_screen_editor", "Script")
 		
 	last_file = current_file
@@ -196,6 +202,10 @@ func _open_script(script : Script) -> void:
 
 func _open_scene(path : String) -> void:
 	INTERFACE.open_scene_from_path(path)
+		
+	var selection = INTERFACE.get_selection()
+	selection.clear()
+	selection.add_node(INTERFACE.get_edited_scene_root())
 	INTERFACE.call_deferred("set_main_screen_editor", "3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.call_deferred("set_main_screen_editor", "2D")
 		
 	last_file = current_file
