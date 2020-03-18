@@ -100,7 +100,7 @@ func _on_copy_button_pressed() -> void:
 		if filter.text.begins_with("_ "): 
 			var use_type_hints = INTERFACE.get_editor_settings().get_setting("text_editor/completion/add_type_hints")
 			var snippet_name = item_list.get_item_text(selection[0]).strip_edges()
-			OS.clipboard = code_snippets.get_value(snippet_name, "signature")
+			OS.clipboard = code_snippets.get_value(snippet_name, "body")
 			if use_type_hints and code_snippets.has_section_key(snippet_name, "type_hint"):
 				OS.clipboard += code_snippets.get_value(snippet_name, "type_hint")
 			elif not use_type_hints and code_snippets.has_section_key(snippet_name, "no_type_hint"):
@@ -462,10 +462,18 @@ func _adapt_list_height() -> void:
 
 
 func _build_snippet_description(snippet_name : String) -> void:
-	info_box.bbcode_text = "No info..."
+	info_box.bbcode_text = "[u]Body:[/u]\n"
+	info_box.bbcode_text += code_snippets.get_value(snippet_name, "body") + "\n\n"
+	if code_snippets.has_section_key(snippet_name, "type_hint"):
+		info_box.bbcode_text += "[u]Body with type hint:[/u]\n"
+		info_box.bbcode_text += code_snippets.get_value(snippet_name, "body") + code_snippets.get_value(snippet_name, "type_hint") + "\n\n" 
+	if code_snippets.has_section_key(snippet_name, "no_type_hint"):
+		info_box.bbcode_text += "[u]Body without type hint:[/u]\n"
+		info_box.bbcode_text += code_snippets.get_value(snippet_name, "body") + code_snippets.get_value(snippet_name, "no_type_hint") + "\n\n" 
 	if code_snippets.has_section_key(snippet_name, "description"):
-		info_box.bbcode_text = code_snippets.get_value(snippet_name, "description")
-		info_box.visible = true
+		info_box.bbcode_text += "[u]\nDescription:[/u]\n\n"
+		info_box.bbcode_text += code_snippets.get_value(snippet_name, "description")
+	info_box.visible = true
 
 
 func _build_help_page() -> void:
@@ -489,7 +497,7 @@ func _paste_signal(signal_name : String) -> void:
 func _paste_code_snippet(snippet_name : String, insert_at_end : bool) -> void:
 	var text_editor = _get_current_text_editor()
 	var use_type_hints = INTERFACE.get_editor_settings().get_setting("text_editor/completion/add_type_hints")
-	var snippet = code_snippets.get_value(snippet_name, "signature")
+	var snippet = code_snippets.get_value(snippet_name, "body")
 	if use_type_hints and code_snippets.has_section_key(snippet_name, "type_hint"):
 		snippet += code_snippets.get_value(snippet_name, "type_hint")
 	elif not use_type_hints and code_snippets.has_section_key(snippet_name, "no_type_hint"):
@@ -502,7 +510,7 @@ func _paste_code_snippet(snippet_name : String, insert_at_end : bool) -> void:
 #	OS.clipboard = ""
 #
 #	var use_type_hints = INTERFACE.get_editor_settings().get_setting("text_editor/completion/add_type_hints")
-#	OS.clipboard +=  code_snippets.get_value(snippet_name, "signature")
+#	OS.clipboard +=  code_snippets.get_value(snippet_name, "body")
 #	OS.clipboard += code_snippets.get_value(snippet_name, "type_hint") if use_type_hints else code_snippets.get_value(snippet_name, "no_type_hint")
 #	
 #	if insert_at_end:
