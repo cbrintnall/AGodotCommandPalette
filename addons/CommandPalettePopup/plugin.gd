@@ -3,7 +3,6 @@ extends EditorPlugin
 
 
 var command_palette_popup : Popup
-var peek : Popup
 
 
 func _enter_tree() -> void:

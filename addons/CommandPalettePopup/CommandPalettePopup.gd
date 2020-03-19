@@ -108,7 +108,7 @@ func _on_copy_button_pressed() -> void:
 		else:
 			# selection is a file name
 			if selection[0] % item_list.max_columns == 1 and not filter.text.begins_with("sig ") and not filter.text.begins_with(": "): 
-				var path = _format_string(item_list.get_item_text(selection[0] + 1), true)
+				var path = _format_string(item_list.get_item_text(selection[0] + 1), true) + "/" + item_list.get_item_text(selection[0]).strip_edges()
 				OS.clipboard = "\"" + path + "\""
 	hide()
 
@@ -123,8 +123,7 @@ func _on_item_list_selected(index : int) -> void:
 		_build_snippet_description(item_list.get_item_text(index).strip_edges())
 	# file paths 
 	elif index % item_list.max_columns == 2 and not filter.text.begins_with("_ ") and not filter.text.begins_with("sig "): 
-		var file_name = item_list.get_item_text(index - 1).strip_edges()
-		INTERFACE.select_file(_format_string(item_list.get_item_text(index), true))
+		INTERFACE.select_file(_format_string(item_list.get_item_text(index), true) + "/" + item_list.get_item_text(index - 1).strip_edges())
 
 
 func _on_item_list_activated(index : int) -> void:
@@ -143,8 +142,8 @@ func _on_item_list_activated(index : int) -> void:
 	elif filter.text.begins_with("sig "):
 		_paste_signal(selected_name)
 	# file names
-	elif index % item_list.max_columns == 1: 
-		_open_selection(_format_string(item_list.get_item_text(index + 1), true))
+	elif index % item_list.max_columns == 1:
+		_open_selection(_format_string(item_list.get_item_text(index + 1), true) + "/" + item_list.get_item_text(index).strip_edges())
 	hide()
 
 
@@ -172,7 +171,7 @@ func _on_filter_text_entered(new_txt : String) -> void:
 			_paste_signal(selected_name)
 		# files (scenes and scripts)
 		else:
-			var path = _format_string(item_list.get_item_text(selection[0] + 1), true)
+			var path = _format_string(item_list.get_item_text(selection[0] + 1), true) + "/" + item_list.get_item_text(selection[0]).strip_edges()
 			_open_selection(path) 
 	hide()
 
@@ -445,7 +444,7 @@ func _build_item_list(search_string : String, special_filter : int = -1, snippet
 		var file_name = list[index].get_file()
 		item_list.add_item(" " + String(index) + "  :: ", null, false)
 		item_list.add_item(" " + file_name, files[list[index]].Icon)
-		item_list.add_item(_format_string(list[index]))
+		item_list.add_item(_format_string(list[index].get_base_dir()))
 		item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
 
 
