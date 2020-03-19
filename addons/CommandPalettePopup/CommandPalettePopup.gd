@@ -121,6 +121,10 @@ func _on_item_list_selected(index : int) -> void:
 	 # selection is a code_snippet
 	if index % item_list.max_columns == 1 and filter.text.begins_with("_ "):
 		_build_snippet_description(item_list.get_item_text(index).strip_edges())
+	# file paths 
+	elif index % item_list.max_columns == 2 and not filter.text.begins_with("_ ") and not filter.text.begins_with("sig "): 
+		var file_name = item_list.get_item_text(index - 1).strip_edges()
+		INTERFACE.select_file(_format_string(item_list.get_item_text(index), true))
 
 
 func _on_item_list_activated(index : int) -> void:
@@ -141,10 +145,6 @@ func _on_item_list_activated(index : int) -> void:
 	# file names
 	elif index % item_list.max_columns == 1: 
 		_open_selection(_format_string(item_list.get_item_text(index + 1), true))
-	# file paths 
-	elif index % item_list.max_columns == 2: 
-		var file_name = item_list.get_item_text(index - 1).strip_edges()
-		INTERFACE.select_file(_format_string(item_list.get_item_text(index), true))
 	hide()
 
 
