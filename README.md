@@ -1,6 +1,6 @@
 # Command Palette
 
-This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to access a list of all (open) scripts and scenes which can be filtered by a search_string as well as code snippets.
+This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to access a list of all (open) scripts and scenes which can be filtered by a search_string as well as code snippets and other minor stuff (see Help.txt).
 
 
 **Features**:
@@ -22,6 +22,8 @@ This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to a
 - Opening a script also opens the scene, which the script is attached to. It only works if the script is attached to the scene root. This gives you autocompletion on the Node(Paths) and their methods.
 
 - A copy button is available to the right of the filter. This way you can quickly copy the file path or code snippet by tabbing from the filter box.
+
+-  Custom shortcuts can be set via the inspector.
 
 (The filter only applies to the actual file name, so you won't get flooded with search results)
 
