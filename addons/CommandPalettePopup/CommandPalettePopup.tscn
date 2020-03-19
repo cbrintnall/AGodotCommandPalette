@@ -14,6 +14,7 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+custom_shortcut = "Control+E"
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 anchor_right = 1.0
@@ -103,7 +104,8 @@ __meta__ = {
 
 [node name="RightInfoBox" type="RichTextLabel" parent="PanelContainer/Panel/MarginContainer/Content/VBoxContainer/MarginContainer/HSplitContainer"]
 visible = false
-margin_left = 951.0
-margin_right = 1890.0
+margin_left = 956.0
+margin_right = 1900.0
+margin_bottom = 1002.0
 size_flags_horizontal = 3
 bbcode_enabled = true

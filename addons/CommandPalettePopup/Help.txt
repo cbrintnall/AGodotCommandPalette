@@ -14,7 +14,7 @@
 
 Opening a script will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
 
-Activating the file path will jump to the file in the filesystem dock.
+Selecting the file path will jump to the file in the filesystem dock.
 
 While the popup is visible, pressing the shortcut again will switch to the last file opened with this plugin. Scene files (.tscn) should have the same name as the scene root (which is the default setting in Godot).
 

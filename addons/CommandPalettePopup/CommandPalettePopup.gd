@@ -15,7 +15,7 @@ export (bool) var adapt_popup_height = true
 
 var shortcut = "Command+P" if OS.get_name() == "OSX" else "Control+P" 
 var max_popup_size = Vector2(clamp(1000 * (stepify(OS.get_screen_dpi(), 100) / 100), 500, OS.get_screen_size().x / 1.5), OS.get_screen_size().y / 2) 
-var current_file # file name as String
+var current_file # file paths as String
 var last_file  # switch between last 2 files opened with this plugin
 var files_are_updating = false
 var files : Dictionary # holds ALL scenes and scripts with different properties, see _update_files_dictionary()
@@ -55,7 +55,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	# switch between the last two opened files (only when opened via this plugin)
 	if event.as_text() == shortcut and event.pressed and visible and not filter.text and filter.has_focus():
 		if last_file:
-			_open_scene(files[last_file].File_Path) if files[last_file].Type == "Scene" else _open_script(files[last_file].ScriptResource)
+			_open_scene(last_file) if files[last_file].Type == "Scene" else _open_script(files[last_file].ScriptResource)
 		hide()
 		
 	elif event.as_text() == shortcut and event.pressed:
@@ -75,7 +75,7 @@ func _on_main_screen_changed(new_screen : String) -> void:
 		while file_name.begins_with("_"):
 			file_name.erase(0, 1)
 		if file_name.begins_with(INTERFACE.get_edited_scene_root().name + "."):
-			current_file = path.get_file()
+			current_file = path
 			break
 	if not FILE_SYSTEM.is_connected("filesystem_changed", self, "_on_filesystem_changed"):
 		_update_files_dictionary(FILE_SYSTEM.get_filesystem(), true)
@@ -108,7 +108,7 @@ func _on_copy_button_pressed() -> void:
 		else:
 			# selection is a file name
 			if selection[0] % item_list.max_columns == 1 and not filter.text.begins_with("sig ") and not filter.text.begins_with(": "): 
-				var path = files[item_list.get_item_text(selection[0]).strip_edges()].File_Path
+				var path = _format_string(item_list.get_item_text(selection[0] + 1), true)
 				OS.clipboard = "\"" + path + "\""
 	hide()
 
@@ -140,11 +140,11 @@ func _on_item_list_activated(index : int) -> void:
 		_paste_signal(selected_name)
 	# file names
 	elif index % item_list.max_columns == 1: 
-		_open_selection(selected_name)
+		_open_selection(_format_string(item_list.get_item_text(index + 1), true))
 	# file paths 
 	elif index % item_list.max_columns == 2: 
 		var file_name = item_list.get_item_text(index - 1).strip_edges()
-		INTERFACE.select_file(files[file_name].File_Path)
+		INTERFACE.select_file(_format_string(item_list.get_item_text(index), true))
 	hide()
 
 
@@ -153,7 +153,7 @@ func _on_filter_text_changed(new_txt : String) -> void:
 	_update_popup_list()
 
 
-func _on_filter_text_entered(new_txt : String) -> void:
+func _on_filter_text_entered(new_txt : String) -> void: 
 	# go to line
 	if filter.text.begins_with(": "): 
 		var number = filter.text.substr(2).strip_edges()
@@ -172,15 +172,16 @@ func _on_filter_text_entered(new_txt : String) -> void:
 			_paste_signal(selected_name)
 		# files (scenes and scripts)
 		else:
-			_open_selection(selected_name) 
+			var path = _format_string(item_list.get_item_text(selection[0] + 1), true)
+			_open_selection(path) 
 	hide()
 
 
-func _open_selection(selected_name : String) -> void:
-	if files[selected_name].Type == "Script": 
-		_open_script(files[selected_name].ScriptResource)
+func _open_selection(path : String) -> void:
+	if files[path].Type == "Script": 
+		_open_script(files[path].ScriptResource)
 	else: 
-		_open_scene(files[selected_name].File_Path)
+		_open_scene(path)
 
 
 func _open_script(script : Script) -> void:
@@ -197,7 +198,7 @@ func _open_script(script : Script) -> void:
 	INTERFACE.call_deferred("set_main_screen_editor", "Script")
 		
 	last_file = current_file
-	current_file = script.resource_path.get_file()
+	current_file = script.resource_path
 
 
 func _open_scene(path : String) -> void:
@@ -209,7 +210,7 @@ func _open_scene(path : String) -> void:
 	INTERFACE.call_deferred("set_main_screen_editor", "3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.call_deferred("set_main_screen_editor", "2D")
 		
 	last_file = current_file
-	current_file = path.get_file()
+	current_file = path
 
 
 func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool = false) -> void:
@@ -223,13 +224,13 @@ func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool =
 		var file_name = folder.get_file(file)
 			
 		if file_type.findn("Script") != -1:
-			files[file_name] = { "Type" : "Script", "File_Path" : file_path, "ScriptResource" : load(file_path), "Icon" : script_icon}
+			files[file_path] = { "Type" : "Script", "File_Name" : file_name, "ScriptResource" : load(file_path), "Icon" : script_icon}
 			
 		elif file_type.findn("Scene") != -1: 
-			files[file_name] = {"Type" : "Scene", "File_Path" : file_path, "Icon" : null}
+			files[file_path] = {"Type" : "Scene", "File_Name" : file_name, "Icon" : null}
 				
 			var scene = load(file_path).instance()
-			files[file_name].Icon = INTERFACE.get_base_control().get_icon(scene.get_class(), "EditorIcons")
+			files[file_path].Icon = INTERFACE.get_base_control().get_icon(scene.get_class(), "EditorIcons")
 			var attached_script = scene.get_script()
 			if attached_script:
 				attached_script.set_meta("Scene_Path", file_path)
@@ -242,7 +243,6 @@ func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool =
 func _update_popup_list() -> void:
 	item_list.clear()
 	item_list.visible = true
-	info_box.bbcode_text = "No info..."
 	info_box.visible = false
 	var search_string = filter.text
 	
@@ -262,8 +262,6 @@ func _update_popup_list() -> void:
 	# help page
 	if search_string == "?":
 		_build_help_page()
-		info_box.visible = true
-		item_list.visible = false
 		return
 		
 	# go to line
@@ -324,30 +322,30 @@ func _build_item_list(search_string : String, special_filter : int = -1, snippet
 	var list : Array
 	match special_filter:
 		FILTER.ALL_SCENES_AND_SCRIPTS:
-			for file in files:
+			for path in files:
 				if search_string:
-					if file.findn(search_string) != -1:
-						list.push_back(file)
+					if files[path].File_Name.findn(search_string) != -1:
+						list.push_back(path)
 				else:
-					list.push_back(file)
+					list.push_back(path)
 			
 		FILTER.ALL_SCRIPTS:
-			for file in files:
-				if files[file].Type == "Script":
+			for path in files:
+				if files[path].Type == "Script":
 					if search_string:
-						if file.findn(search_string) != -1:
-							list.push_back(file)
+						if files[path].File_Name.findn(search_string) != -1:
+							list.push_back(path)
 					else:
-						list.push_back(file)
+						list.push_back(path)
 			
 		FILTER.ALL_SCENES:
-			for file in files:
-				if files[file].Type == "Scene":
+			for path in files:
+				if files[path].Type == "Scene":
 					if search_string:
-						if file.findn(search_string) != -1:
-							list.push_back(file)
+						if files[path].File_Name.findn(search_string) != -1:
+							list.push_back(path)
 					else:
-						list.push_back(file)
+						list.push_back(path)
 			
 		FILTER.ALL_OPEN_SCENES:
 			var open_scenes = INTERFACE.get_open_scenes()
@@ -355,9 +353,9 @@ func _build_item_list(search_string : String, special_filter : int = -1, snippet
 				var scene_name = path.get_file()
 				if search_string:
 					if scene_name.findn(search_string) != -1:
-						list.push_back(scene_name)
+						list.push_back(path)
 				else:
-					list.push_back(scene_name)
+					list.push_back(path)
 			
 		FILTER.ALL_OPEN_SCRIPTS:
 			var open_scripts = EDITOR.get_open_scripts()
@@ -365,10 +363,48 @@ func _build_item_list(search_string : String, special_filter : int = -1, snippet
 				var script_name = script.resource_path.get_file()
 				if search_string:
 					if script_name.findn(search_string) != -1:
-						list.push_back(script_name)
+						list.push_back(script.resource_path)
 						
 				else:
-					list.push_back(script_name)
+					list.push_back(script.resource_path)
+			
+		FILTER.ALL_OPEN_SCENES_SCRIPTS:
+			var open_scenes = INTERFACE.get_open_scenes()
+			for path in open_scenes:
+				var scene_name = path.get_file()
+				if search_string:
+					if scene_name.findn(search_string) != -1:
+						list.push_back(path)
+				else:
+					list.push_back(path)
+				
+			var open_scripts = EDITOR.get_open_scripts()
+			for script in open_scripts:
+				var script_name = script.resource_path.get_file()
+				if search_string:
+					if script_name.findn(search_string) != -1:
+						list.push_back(script.resource_path)
+				else:
+					list.push_back(script.resource_path)
+			
+		FILTER.SNIPPETS:
+			var counter = 0
+			item_list.set_meta("snippet_at_end", true) if snippet_at_end else item_list.set_meta("snippet_at_end", false)
+			for method_name in code_snippets.get_sections():
+				if search_string:
+					if method_name.findn(search_string) != -1:
+						item_list.add_item(" " + String(counter) + "  :: ", null, false)
+						item_list.add_item(" " + method_name)
+						item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
+						item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+						counter += 1
+				else:
+					item_list.add_item(" " + String(counter) + "  :: ", null, false)
+					item_list.add_item(" " + method_name)
+					item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
+					item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+					counter += 1
+			return
 			
 		FILTER.SIGNALS:
 			var scene = load(EDITOR.get_current_script().get_meta("Scene_Path")).instance()
@@ -402,51 +438,14 @@ func _build_item_list(search_string : String, special_filter : int = -1, snippet
 						item_list.add_item("", null, false)
 					counter += 1
 			scene.free()
-			
-		FILTER.ALL_OPEN_SCENES_SCRIPTS:
-			var open_scenes = INTERFACE.get_open_scenes()
-			for path in open_scenes:
-				var scene_name = path.get_file()
-				if search_string:
-					if scene_name.findn(search_string) != -1:
-						list.push_back(scene_name)
-				else:
-					list.push_back(scene_name)
-				
-			var open_scripts = EDITOR.get_open_scripts()
-			for script in open_scripts:
-				var script_name = script.resource_path.get_file()
-				if search_string:
-					if script_name.findn(search_string) != -1:
-						list.push_back(script_name)
-				else:
-					list.push_back(script_name)
-			
-		FILTER.SNIPPETS:
-			var counter = 0
-			item_list.set_meta("snippet_at_end", true) if snippet_at_end else item_list.set_meta("snippet_at_end", false)
-			for method_name in code_snippets.get_sections():
-				if search_string:
-					if method_name.findn(search_string) != -1:
-						item_list.add_item(" " + String(counter) + "  :: ", null, false)
-						item_list.add_item(" " + method_name)
-						item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
-						item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
-						counter += 1
-				else:
-					item_list.add_item(" " + String(counter) + "  :: ", null, false)
-					item_list.add_item(" " + method_name)
-					item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
-					item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
-					counter += 1
 			return
 		
-	list.sort()
+	_quick_sort_by_name(list, 0, list.size() - 1)
 	for index in list.size():
+		var file_name = list[index].get_file()
 		item_list.add_item(" " + String(index) + "  :: ", null, false)
-		item_list.add_item(" " + list[index], files[list[index]].Icon)
-		var file_path = files[list[index]].File_Path.get_base_dir()
-		item_list.add_item(" - " + file_path.substr(0, 6) + " - " + file_path.substr(6).replace("/", " - "))
+		item_list.add_item(" " + file_name, files[list[index]].Icon)
+		item_list.add_item(_format_string(list[index]))
 		item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
 
 
@@ -481,6 +480,8 @@ func _build_help_page() -> void:
 	file.open("res://addons/CommandPalettePopup/Help.txt", File.READ)
 	info_box.bbcode_text = file.get_as_text()
 	file.close()
+	info_box.visible = true
+	item_list.visible = false
 
 
 func _paste_signal(signal_name : String) -> void:
@@ -540,3 +541,39 @@ func _get_current_text_editor() -> TextEdit:
 			break
 		script_index += 1
 	return EDITOR.get_child(0).get_child(1).get_child(1).get_child(script_index).get_child(0).get_child(0).get_child(0) as TextEdit 
+
+
+func _format_string(path : String, reversed : bool = false) -> String:
+	# formatted path example: " - res:// - addons - plugin.gd"
+	if reversed:
+		return "res://" + path.substr(12).replace(" - ", "/") 
+	else:
+		var path_without_res = path.substr(6)
+		return " - res:// - " + path_without_res.replace("/", " - ")
+
+
+func _quick_sort_by_name(array : Array, lo : int, hi : int) -> void:
+	if lo < hi:
+		var p = _partition(array, lo, hi)
+		_quick_sort_by_name(array, lo, p)
+		_quick_sort_by_name(array, p + 1, hi)
+
+
+func _partition(array : Array, lo : int, hi : int):
+	var pivot = array[(hi + lo) / 2].get_file()
+	var i = lo - 1
+	var j = hi + 1
+	while true:
+		while true:
+			i += 1
+			if array[i].get_file().nocasecmp_to(pivot) in [1, 0]:
+				break
+		while true:
+			j -= 1
+			if array[j].get_file().nocasecmp_to(pivot) in [-1, 0]:
+				break
+		if i >= j:
+			return j
+		var tmp = array[i]
+		array[i] = array[j]
+		array[j] = tmp
