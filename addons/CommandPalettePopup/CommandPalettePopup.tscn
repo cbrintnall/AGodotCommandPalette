@@ -14,6 +14,8 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+keyboard_shortcut = "Control+E"
+max_popup_size = Vector2( 1000, 720 )
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 anchor_right = 1.0

@@ -16,8 +16,8 @@ This plugin for the Godot game engine 3.2.X adds a global keyboard shortcut to a
 - Starting the search_string with \"as \" will show ALL SCENES.
 - Starting the search_string with \"sig \" will list all signals of the current scene root. Activating a signal will insert the signal connection at the cursor position with the cursor position moving to the signal target. The signal method will be copied to the clipboard.
 - Starting the search_string with \": \" followed by an integer will jump to that line in the script editor.
-- Starting the search_string with \"_ \" will show the code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. The sections are the names shown in the item_list. "body" is the only section key, which has to be defined. It can be whatever you want to eventually paste. By default a few virtual methods are implemented.
-- Ending the search_string with " e" when using the code snippets, will insert the snippet at the end of the file (instead of at the cursor position).
+- Starting the search_string with \":m \" will list the methods of the current script and allow to jump to a selected method.
+- Starting the search_string with \"_ \" will show the code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. The sections are the names shown in the item_list. "body" is the only section key, which has to be defined. It can be whatever you want to eventually paste. Adding a "@" into the snippet will make the cursor jump to that position. By default a few virtual methods are implemented.
 
 - Opening a script also opens the scene, which the script is attached to. It only works if the script is attached to the scene root. This gives you autocompletion on the Node(Paths) and their methods.
 
