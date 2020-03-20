@@ -10,9 +10,8 @@ onready var current_label = $PanelContainer/Panel/MarginContainer/Content/VBoxCo
 onready var last_label = $PanelContainer/Panel/MarginContainer/Content/VBoxContainer/HSplitContainer/LastLabel
 
 # after making changes in the inspector, reopen the project to apply the changes
-# go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a keyboard_shortcut looks as a String 
-export (String) var keyboard_shortcut = "Command+P" if OS.get_name() == "OSX" else "Control+P" 
-export (Vector2) var max_popup_size = Vector2(clamp(1000 * (stepify(OS.get_screen_dpi(), 100) / 100), 500, OS.get_screen_size().x / 1.5), OS.get_screen_size().y / 2) 
+export (String) var custom_keyboard_shortcut # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a keyboard_shortcut looks as a String 
+export (Vector2) var custom_popup_size
 export (String) var keyword_goto_line = ": " # go to line
 export (String) var keyword_goto_method = ":m " # go to method m 
 export (String) var keyword_signals = "sig " # short for signals
@@ -27,6 +26,10 @@ export (String) var snippet_marker_pos = "@"
 export (bool) var adapt_popup_height = true
 export (bool) var show_full_path_in_recent_files = false
 
+
+var keyboard_shortcut = "Command+P" if OS.get_name() == "OSX" else "Control+P" 
+var max_popup_size = Vector2(clamp(1000 * OS.get_screen_dpi() / 100, 0, OS.get_screen_size().x / 1.5), \
+		clamp(OS.get_screen_size().y / 2 + 100 * OS.get_screen_dpi() / 100, 0, OS.get_screen_size().y - 200))
 var files_are_updating = false
 var files : Dictionary # holds ALL scenes and scripts with different properties, see _update_files_dictionary()
 var types = ["-", "bool", "int", "float", "String", "Vector2", "Rect2", "Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", \
@@ -60,6 +63,9 @@ func _ready() -> void:
 	var error = code_snippets.load("res://addons/CommandPalettePopup/CodeSnippets.cfg")
 	if error != OK:
 		print("Error loading the code_snippets. Error code: %s" % error)
+		
+	keyboard_shortcut = custom_keyboard_shortcut if custom_keyboard_shortcut else keyboard_shortcut
+	max_popup_size = custom_popup_size if custom_popup_size else max_popup_size
 
 
 func _unhandled_key_input(event: InputEventKey) -> void:
