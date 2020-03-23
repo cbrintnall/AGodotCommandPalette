@@ -30,6 +30,7 @@ func _init_palette() -> void:
 	command_palette_popup.EDITOR = get_editor_interface().get_script_editor()
 	command_palette_popup.FILE_SYSTEM = get_editor_interface().get_resource_filesystem()
 	command_palette_popup.SCRIPT_CREATE_DIALOG = get_script_create_dialog()
+	command_palette_popup.EDITOR_SETTINGS = get_editor_interface().get_editor_settings()
 	add_control_to_container(EditorPlugin.CONTAINER_TOOLBAR, command_palette_popup)
 
 

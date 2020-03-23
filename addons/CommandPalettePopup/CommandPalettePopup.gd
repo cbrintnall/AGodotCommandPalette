@@ -22,6 +22,7 @@ export (String) var keyword_all_scripts = "ac " # "ac" for A(ll) C(ode) files
 export (String) var keyword_all_open_scenes = "s " # "s " for all open S(cenes)
 export (String) var keyword_all_open_scenes_and_scripts = "cs " # "cs " for all open C(ode) and S(cene) files
 export (String) var keyword_add_script = "+"
+export (String) var keyword_editor_settings = "sett "
 export (Color) var secondary_color = Color(1, 1, 1, .3) # color for 3rd column in ItemList (file paths, additional_info...)
 export (String) var snippet_marker_pos = "@"
 export (bool) var adapt_popup_height = true
@@ -31,33 +32,34 @@ var keyboard_shortcut = "Command+P" if OS.get_name() == "OSX" else "Control+P"
 var max_popup_size = Vector2(clamp(1000 * OS.get_screen_dpi() / 100, 0, OS.get_screen_size().x / 1.5), \
 		clamp(OS.get_screen_size().y / 2 + 100 * OS.get_screen_dpi() / 100, 0, OS.get_screen_size().y - 200))
 var current_main_screen : String = ""
-var scenes : Dictionary # holds all scenes
-var scripts : Dictionary # holds all scripts
-var other_files : Dictionary # holds all other files
+var editor_settings : Dictionary # holds the paths to the settings
+var project_settings : Dictionary # holds the paths to the settings
+var scenes : Dictionary # holds all scenes; [file_path] = file_name, icon
+var scripts : Dictionary # holds all scripts; [file_path] = file_name, icon, resource
+var other_files : Dictionary # holds all other files; [file] = file_name, icon
 var files_are_updating : bool = false
 var recent_files_are_updating : bool  = false
 var types : Array = ["-", "bool", "int", "float", "String", "Vector2", "Rect2", "Vector3", "Transform2D", "Plane", "Quat", "AABB", "Basis", \
 		"Transform", "Color", "NodePath", "RID", "Object", "Dictionary", "Array", "PoolByteArray", "PoolIntArray", "PoolRealArray", \
 		"PoolStringArray", "PoolVector2Array", "PoolVector3Array", "PoolColorArray", "Variant"] # type hints for vars when using the signals keyword
-enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SIGNALS, SNIPPETS, METHODS, ADD_SCRIPT}
+enum FILTER {ALL_SCENES_AND_SCRIPTS, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, \
+		SIGNALS, SNIPPETS, METHODS, ADD_SCRIPT, SETTINGS}
 var current_filter : int
 var code_snippets : ConfigFile = ConfigFile.new()
 var script_added_to : Node # the node a script, which is created with this plugin, will be added to
+var submenu : Popup
 
 var PLUGIN : EditorPlugin
 var INTERFACE : EditorInterface
 var EDITOR : ScriptEditor
 var FILE_SYSTEM : EditorFileSystem
 var SCRIPT_CREATE_DIALOG : ScriptCreateDialog
-	
-	# TDO changed Popup to WindowDialog
-	# TODO erase the snippet marker from the clipboard when using copy button 
-	# TODO all files instead of scenes and scripts only
-	# TODO recent files should also include files not opened with this plugin 
-	# TODO add new script to node in current scene
-# TODO add/update Project/EditorSettings?
+var EDITOR_SETTINGS : EditorSettings
+
 # TODO quick set node properties
 # TODO regex
+# TODO move code snippets/and signals into their own plugin
+# TODO refactor this mess
 
 func _ready() -> void: 
 	connect("popup_hide", self, "_on_popup_hide")
@@ -78,9 +80,15 @@ func _ready() -> void:
 	keyboard_shortcut = custom_keyboard_shortcut if custom_keyboard_shortcut else keyboard_shortcut
 	max_popup_size = custom_popup_size if custom_popup_size else max_popup_size
 		
+	submenu = load("res://addons/CommandPalettePopup/SubmenuSettingsSetter.tscn").instance()
+	add_child(submenu)
+		
 	yield(get_tree().create_timer(0.2), "timeout")
 	EDITOR.connect("editor_script_changed", self, "_on_editor_script_changed")
 	PLUGIN.connect("scene_changed", self, "_on_scene_changed")
+		
+	_update_editor_settings()
+	_update_project_settings()
 
 
 func _unhandled_key_input(event: InputEventKey) -> void:
@@ -97,7 +105,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	elif event.as_text() == keyboard_shortcut and event.pressed:
 		var error = code_snippets.load("res://addons/CommandPalettePopup/CodeSnippets.cfg")
 		if error != OK:
-			print("Error loading the code_snippets. Error code: %s" % error)
+			push_warning("Command Palette Plugin: Error loading the code_snippets. Error code: %s." % error)
 			
 		rect_size = max_popup_size
 		popup_centered()
@@ -171,8 +179,12 @@ func _on_copy_button_pressed() -> void:
 			if marker_pos != -1:
 				snippet.erase(marker_pos, snippet_marker_pos.length()) 
 			OS.clipboard = snippet
+			
+		elif current_filter == FILTER.SETTINGS:
+			OS.clipboard =  "\"" + item_list.get_item_text(selection[0]) + "\""
+			
 		# selection is a file name
-		elif selection[0] % item_list.max_columns == 1 and not current_filter in [FILTER.SNIPPETS, FILTER.METHODS, FILTER.SIGNALS, FILTER.ADD_SCRIPT]: 
+		elif selection[0] % item_list.max_columns == 1 and _current_filter_displays_files(): 
 			var path = _format_string(item_list.get_item_text(selection[0] + 1), true) + "/" + item_list.get_item_text(selection[0]).strip_edges()
 			OS.clipboard = "\"" + path + "\""
 	hide()
@@ -187,25 +199,64 @@ func _on_item_list_selected(index : int) -> void:
 		_build_snippet_description(item_list.get_item_text(index).strip_edges())
 		
 	# selection is a file path
-	elif index % item_list.max_columns == 2 and not current_filter in [FILTER.SNIPPETS, FILTER.METHODS, FILTER.SIGNALS, FILTER.ADD_SCRIPT]: 
+	elif index % item_list.max_columns == 2 and _current_filter_displays_files(): 
 		INTERFACE.select_file(_format_string(item_list.get_item_text(index), true) + "/" + item_list.get_item_text(index - 1).strip_edges())
 
 
 func _on_item_list_activated(index : int) -> void:
-	var selected_name = item_list.get_item_text(index).strip_edges()
+	_activate_item(index)
+
+
+func _on_filter_text_changed(new_txt : String) -> void:
+	# autocompletion on settings; double spaces because one space for jumping in item_list
+	if filter.text.begins_with(keyword_editor_settings) and filter.text.ends_with("  ") and filter.text.length() > keyword_editor_settings.length() + 1:
+		var search_string = filter.text.substr(keyword_editor_settings.length()).strip_edges()
+		var selection = item_list.get_selected_items()
+		if selection:
+			var sel_text = item_list.get_item_text(selection[0])
+			var pos = sel_text.findn(search_string)
+			var end_pos = sel_text.findn("/", pos + filter.text.length() - keyword_editor_settings.length()) + 1
+			filter.text = keyword_editor_settings + sel_text.substr(0, end_pos if end_pos else -1)
+			filter.caret_position = filter.text.length()
 		
-	if current_filter == FILTER.SNIPPETS: 
-		_paste_code_snippet(selected_name)
-		
-	elif filter.text.begins_with(keyword_goto_line): 
+	rect_size = max_popup_size
+	_update_popup_list()
+
+
+func _on_filter_text_entered(new_txt : String) -> void: 
+	var selection = item_list.get_selected_items()
+	if selection:
+		_activate_item(selection[0])
+	else:
+		_activate_item()
+
+
+func _activate_item(selected_index : int = -1) -> void:
+	if filter.text.begins_with(keyword_goto_line): 
 		var number = filter.text.substr(keyword_goto_line.length()).strip_edges()
 		if number.is_valid_integer():
 			var max_lines = EDITOR.get_current_script().source_code.count("\n")
 			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
-			INTERFACE.call_deferred("set_main_screen_editor", "Script")
+			selected_index = -1
+		
+	if selected_index == -1 or item_list.is_item_disabled(selected_index):
+		hide()
+		return
+		
+	var selected_name = item_list.get_item_text(selected_index).strip_edges()
+		
+	if current_filter == FILTER.SNIPPETS: 
+		_paste_code_snippet(selected_name)
+		
+	elif current_filter == FILTER.SETTINGS:
+		if item_list.get_item_text(selected_index - 1).begins_with("Project"):
+			submenu._show(project_settings[item_list.get_item_text(selected_index)], "Project_Settings", ProjectSettings)
+		else:
+			submenu._show(editor_settings[item_list.get_item_text(selected_index)], "Editor_Settings", EDITOR_SETTINGS)
+		return
 		
 	elif current_filter == FILTER.METHODS:
-		var line = item_list.get_item_text(index + 1).split(":")[1].strip_edges()
+		var line = item_list.get_item_text(selected_index + 1).split(":")[1].strip_edges()
 		EDITOR.goto_line(line as int - 1)
 		
 	# create script and attach it to a node in the current scene
@@ -221,63 +272,15 @@ func _on_item_list_activated(index : int) -> void:
 		SCRIPT_CREATE_DIALOG.config(script_added_to.get_class(), (file_path if file_path else "res:/") + "/" + selected_name + ".gd")
 		SCRIPT_CREATE_DIALOG.popup_centered()
 		
-	# signals of current scene root
+	# signals for current scene root
 	elif current_filter == FILTER.SIGNALS:
 		_paste_signal(selected_name)
 		
-	# file names
-	elif index % item_list.max_columns == 1:
-		_open_selection(_format_string(item_list.get_item_text(index + 1), true) + "/" + item_list.get_item_text(index).strip_edges())
-	hide()
-
-
-func _on_filter_text_changed(new_txt : String) -> void:
-	rect_size = max_popup_size
-	_update_popup_list()
-
-
-# TOFIXME merge with _on_item_list_selected()
-func _on_filter_text_entered(new_txt : String) -> void: 
-	var selection = item_list.get_selected_items()
+	# files
+	else:
+		var path = _format_string(item_list.get_item_text(selected_index + 1), true) + "/" + item_list.get_item_text(selected_index).strip_edges()
+		_open_selection(path) 
 		
-	if filter.text.begins_with(keyword_goto_line): 
-		var number = filter.text.substr(keyword_goto_line.length()).strip_edges()
-		if number.is_valid_integer():
-			var max_lines = EDITOR.get_current_script().source_code.count("\n")
-			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
-			INTERFACE.call_deferred("set_main_screen_editor", "Script")
-		
-	elif selection:
-		var selected_name = item_list.get_item_text(selection[0]).strip_edges()
-			
-		if current_filter == FILTER.SNIPPETS: 
-			_paste_code_snippet(selected_name)
-			
-		elif current_filter == FILTER.METHODS:
-			var line = item_list.get_item_text(selection[0] + 1).split(":")[1].strip_edges()
-			EDITOR.goto_line(line as int - 1)
-			
-		# create script and attach it to a node in the current scene
-		elif current_filter == FILTER.ADD_SCRIPT:
-			var sel = INTERFACE.get_selection()
-			sel.clear()
-			var root = INTERFACE.get_edited_scene_root()
-			script_added_to = root.find_node(selected_name.strip_edges()) 
-			if not script_added_to:
-				script_added_to = root
-			sel.add_node(script_added_to)
-			var file_path = INTERFACE.get_edited_scene_root().filename.get_base_dir() 
-			SCRIPT_CREATE_DIALOG.config(script_added_to.get_class(), (file_path if file_path else "res:/") + "/" + selected_name + ".gd")
-			SCRIPT_CREATE_DIALOG.popup_centered()
-			
-		# signals for current scene root
-		elif current_filter == FILTER.SIGNALS:
-			_paste_signal(selected_name)
-			
-		# files
-		else:
-			var path = _format_string(item_list.get_item_text(selection[0] + 1), true) + "/" + item_list.get_item_text(selection[0]).strip_edges()
-			_open_selection(path) 
 	hide()
 
 
@@ -310,7 +313,8 @@ func _open_scene(path : String) -> void:
 	var selection = INTERFACE.get_selection()
 	selection.clear()
 	selection.add_node(INTERFACE.get_edited_scene_root())
-	INTERFACE.call_deferred("set_main_screen_editor", "3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.call_deferred("set_main_screen_editor", "2D")
+	INTERFACE.call_deferred("set_main_screen_editor", "3D") if INTERFACE.get_edited_scene_root() is Spatial \
+			else INTERFACE.call_deferred("set_main_screen_editor", "2D")
 
 
 func _open_other_file(path : String) -> void:
@@ -358,15 +362,16 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 	item_list.clear()
 	item_list.visible = true
 	info_box.visible = false
-	var search_string = filter.text
+	var search_string : String = filter.text 
 		
 	# typing " X" at the end of the search_string jumps to the X-th item in the list
 	var quickselect_line = 0
-	var qs_starts_at = search_string.find_last(" ")
-	if qs_starts_at != -1 and not search_string.ends_with(" ") and not search_string.begins_with(keyword_goto_line):
+	var qs_starts_at = search_string.strip_edges().find_last(" ")
+	if qs_starts_at != -1 and not search_string.begins_with(keyword_goto_line):
 		quickselect_line = search_string.substr(qs_starts_at + 1)
-		if quickselect_line.is_valid_integer():
-			search_string.erase(qs_starts_at + 1, String(quickselect_line).length())
+		if quickselect_line.strip_edges().is_valid_integer():
+			search_string.erase(qs_starts_at + 1, quickselect_line.length())
+			quickselect_line = quickselect_line.strip_edges()
 		
 	# help page
 	if search_string == "?":
@@ -375,14 +380,22 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		
 	# go to line
 	elif search_string.begins_with(keyword_goto_line): 
-		var text_editor = _get_current_text_editor() 
-		var number = search_string.substr(keyword_goto_line.length()).strip_edges()
-		item_list.add_item("Go to line: %s of " % (clamp(number as int, 1, text_editor.get_line_count()) if number.is_valid_integer() \
-				else "Enter valid number") + String(text_editor.get_line_count()), null, false)
-		if search_string.ends_with(" ") and number.is_valid_integer():
-			EDITOR.goto_line(clamp(number as int - 1, 0, text_editor.get_line_count()))
-		_adapt_list_height()
-		return
+		if not current_main_screen == "Script":
+			item_list.add_item("Go to \"Script\" view to goto_line.", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+		else:
+			var text_editor = _get_current_text_editor() 
+			var number = search_string.substr(keyword_goto_line.length()).strip_edges()
+			item_list.add_item("Go to line: %s of " % (clamp(number as int, 1, text_editor.get_line_count()) if number.is_valid_integer() \
+					else "Enter valid number") + String(text_editor.get_line_count()), null, false)
+			if search_string.ends_with(" ") and number.is_valid_integer():
+				EDITOR.goto_line(clamp(number as int - 1, 0, text_editor.get_line_count()))
+			_adapt_list_height()
+			return
 		
 	# add script to node
 	elif search_string.begins_with(keyword_add_script):
@@ -390,20 +403,49 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		_build_node_list(INTERFACE.get_edited_scene_root(), search_string.substr(keyword_add_script.length()).strip_edges())
 		_count_node_list()
 		
+	# edit editor settings
+	elif search_string.begins_with(keyword_editor_settings):
+		current_filter = FILTER.SETTINGS
+		_build_item_list(search_string.substr(keyword_editor_settings.length()).strip_edges())
+		
 	# methods of the current script
 	elif search_string.begins_with(keyword_goto_method):
-		current_filter = FILTER.METHODS
-		_build_item_list(search_string.substr(keyword_goto_method.length()).strip_edges())
+		if not current_main_screen == "Script":
+			item_list.add_item("Go to \"Script\" view to goto_method.", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+		else:
+			current_filter = FILTER.METHODS
+			_build_item_list(search_string.substr(keyword_goto_method.length()).strip_edges())
 		
 	# show signals of the current scene root
-	elif search_string.begins_with(keyword_signals): 
-		current_filter = FILTER.SIGNALS
-		_build_item_list(search_string.substr(keyword_signals.length()).strip_edges())
+	elif search_string.begins_with(keyword_signals):
+		if not current_main_screen == "Script":
+			item_list.add_item("Go to \"Script\" view to see the available signals.", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+		else:
+			current_filter = FILTER.SIGNALS
+			_build_item_list(search_string.substr(keyword_signals.length()).strip_edges())
 		
 	# show code snippets
 	elif search_string.begins_with(keyword_snippets): 
-		current_filter = FILTER.SNIPPETS
-		_build_item_list(search_string.substr(keyword_snippets.length()).strip_edges())
+		if not current_main_screen == "Script":
+			item_list.add_item("Go to \"Script\" view to see the available snippets.", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.add_item("", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+		else:
+			current_filter = FILTER.SNIPPETS
+			_build_item_list(search_string.substr(keyword_snippets.length()).strip_edges())
 		
 	# show all scripts and scenes
 	elif search_string.begins_with(keyword_all_scenes_and_scripts): 
@@ -437,12 +479,12 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		
 	quickselect_line = clamp(quickselect_line as int, 0, item_list.get_item_count() / item_list.max_columns - 1)
 	if item_list.get_item_count() > 0:
-		item_list.select(quickselect_line * item_list.max_columns + (1 if not filter.text.begins_with(keyword_add_script) else 2))
+		item_list.select(quickselect_line * item_list.max_columns + (2 if filter.text.begins_with(keyword_add_script) or current_filter == FILTER.SETTINGS else 1))
 		item_list.ensure_current_is_visible()
-		if filter.text.begins_with(keyword_snippets): 
+		if filter.text.begins_with(keyword_snippets) and current_main_screen == "Script": 
 			_build_snippet_description(item_list.get_item_text(item_list.get_selected_items()[0]).strip_edges())
 		
-	if not filter.text.begins_with(keyword_snippets):
+	if not filter.text.begins_with(keyword_snippets) or current_main_screen != "Script":
 		_adapt_list_height()
 
 
@@ -452,100 +494,74 @@ func _build_item_list(search_string : String) -> void:
 	match current_filter:
 		FILTER.ALL_SCENES_AND_SCRIPTS:
 			for path in scenes:
-				if search_string:
-					if scenes[path].File_Name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not scenes[path].File_Name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 					
 			for path in scripts:
-				if search_string:
-					if scripts[path].File_Name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not scripts[path].File_Name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 				
 			for path in other_files:
-				if search_string:
-					if other_files[path].File_Name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not other_files[path].File_Name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 			
 		FILTER.ALL_SCRIPTS:
 			for path in scripts:
-				if search_string:
-					if scripts[path].File_Name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not scripts[path].File_Name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 			
 		FILTER.ALL_SCENES:
 			for path in scenes:
-				if search_string:
-					if scenes[path].File_Name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not scenes[path].File_Name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 			
 		FILTER.ALL_OPEN_SCENES:
 			var open_scenes = INTERFACE.get_open_scenes()
 			for path in open_scenes:
 				var scene_name = path.get_file()
-				if search_string:
-					if scene_name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not scene_name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 			
 		FILTER.ALL_OPEN_SCRIPTS:
 			var open_scripts = EDITOR.get_open_scripts()
 			for script in open_scripts:
 				var script_name = script.resource_path.get_file()
-				if search_string:
-					if script_name.findn(search_string) != -1:
-						list.push_back(script.resource_path)
-			
-				else:
-					list.push_back(script.resource_path)
+				if search_string and not script_name.findn(search_string) != -1:
+					continue
+				list.push_back(script.resource_path)
 			
 		FILTER.ALL_OPEN_SCENES_SCRIPTS:
 			var open_scenes = INTERFACE.get_open_scenes()
 			for path in open_scenes:
 				var scene_name = path.get_file()
-				if search_string:
-					if scene_name.findn(search_string) != -1:
-						list.push_back(path)
-				else:
-					list.push_back(path)
+				if search_string and not scene_name.findn(search_string) != -1:
+					continue
+				list.push_back(path)
 				
 			var open_scripts = EDITOR.get_open_scripts()
 			for script in open_scripts:
 				var script_name = script.resource_path.get_file()
-				if search_string:
-					if script_name.findn(search_string) != -1:
-						list.push_back(script.resource_path)
-				else:
-					list.push_back(script.resource_path)
+				if search_string and not script_name.findn(search_string) != -1:
+					continue
+				list.push_back(script.resource_path)
 			
 		FILTER.SNIPPETS:
 			var counter = 0
 			for method_name in code_snippets.get_sections():
-				if search_string:
-					if method_name.findn(search_string) != -1:
-						item_list.add_item(" " + String(counter) + "  :: ", null, false)
-						item_list.add_item(" " + method_name)
-						item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) \
-								if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
-						item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
-						counter += 1
-				else:
-					item_list.add_item(" " + String(counter) + "  :: ", null, false)
-					item_list.add_item(" " + method_name)
-					item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) \
-							if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
-					item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
-					counter += 1
+				if search_string and not method_name.findn(search_string) != -1:
+					continue
+				item_list.add_item(" " + String(counter) + "  :: ", null, false)
+				item_list.add_item(" " + method_name)
+				item_list.add_item(code_snippets.get_value(method_name, "additional_info"), null, false) \
+						if code_snippets.has_section_key(method_name, "additional_info") else item_list.add_item("")
+				item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+				counter += 1
 			return
 			
 		FILTER.SIGNALS:
@@ -553,37 +569,23 @@ func _build_item_list(search_string : String) -> void:
 			var scene = load(EDITOR.get_current_script().get_meta("Scene_Path")).instance()
 			var counter = 0
 			for signals in scene.get_signal_list():
-				if search_string:
-					if signals.name.findn(search_string) != -1:
-						item_list.add_item(" " + String(counter) + "  :: ", null, false)
-						item_list.add_item(signals.name)
-						if signals.args: 
-							item_list.add_item("(") 
-							var current_item = item_list.get_item_count() - 1
-							for arg_index in signals.args.size():
-								item_list.set_item_text(current_item, item_list.get_item_text(current_item) + signals.args[arg_index].name + " : " \
-								+ (signals.args[arg_index].get("class_name") if signals.args[arg_index].get("class_name") else types[signals.args[arg_index].type]) \
-								+ (", " if arg_index < signals.args.size() - 1 else ""))
-							item_list.set_item_text(current_item, item_list.get_item_text(current_item) + ")") 
-							item_list.set_item_disabled(current_item, true)
-						else:
-							item_list.add_item("", null, false)
-						counter += 1
+				if search_string and not signals.name.findn(search_string) != -1:
+					continue
+				item_list.add_item(" " + String(counter) + "  :: ", null, false)
+				item_list.add_item(signals.name)
+				if signals.args:
+					item_list.add_item("(") 
+					var current_item = item_list.get_item_count() - 1
+					for arg_index in signals.args.size():
+							item_list.set_item_text(current_item, item_list.get_item_text(current_item) + signals.args[arg_index].name + " : " \
+							+ (signals.args[arg_index].get("class_name") if signals.args[arg_index].get("class_name") else types[signals.args[arg_index].type]) \
+							+ (", " if arg_index < signals.args.size() - 1 else ""))
+					item_list.set_item_text(current_item, item_list.get_item_text(current_item) + ")") 
+					item_list.set_item_disabled(current_item, true)
 				else:
-					item_list.add_item(" " + String(counter) + "  :: ", null, false)
-					item_list.add_item(signals.name)
-					if signals.args:
-						item_list.add_item("(") 
-						var current_item = item_list.get_item_count() - 1
-						for arg_index in signals.args.size():
-								item_list.set_item_text(current_item, item_list.get_item_text(current_item) + signals.args[arg_index].name + " : " \
-								+ (signals.args[arg_index].get("class_name") if signals.args[arg_index].get("class_name") else types[signals.args[arg_index].type]) \
-								+ (", " if arg_index < signals.args.size() - 1 else ""))
-						item_list.set_item_text(current_item, item_list.get_item_text(current_item) + ")") 
-						item_list.set_item_disabled(current_item, true)
-					else:
-						item_list.add_item("", null, false)
-					counter += 1
+					item_list.add_item("", null, false)
+					item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+				counter += 1
 			scene.free()
 			return
 			
@@ -593,15 +595,11 @@ func _build_item_list(search_string : String) -> void:
 			var method_dict : Dictionary # maps methods to their line position
 			for method in current_script.get_script_method_list():
 				if method.name != "_init": # _init always appears
-					if search_string:
-						if method.name.findn(search_string) != -1:
-							var pos = current_script.source_code.findn("func " + method.name)
-							var line = current_script.source_code.count("\n", 0, pos)
-							method_dict[line] = method.name
-					else:
-						var pos = current_script.source_code.findn("func " + method.name)
-						var line = current_script.source_code.count("\n", 0, pos)
-						method_dict[line] = method.name
+					if search_string and not method.name.findn(search_string) != -1:
+						continue
+					var pos = current_script.source_code.findn("func " + method.name)
+					var line = current_script.source_code.count("\n", 0, pos)
+					method_dict[line] = method.name
 			var lines = method_dict.keys() # get_script_method_list() doesnt give the list in order of appearance in the script
 			lines.sort()
 				
@@ -613,38 +611,55 @@ func _build_item_list(search_string : String) -> void:
 				item_list.set_item_disabled(item_list.get_item_count() - 1, true)
 				counter += 1
 			return
+			
+		FILTER.SETTINGS:
+			for setting in editor_settings:
+				if search_string and not setting.findn(search_string) != -1:
+					continue
+				list.push_back(setting)
+				
+			for setting in project_settings:
+				if search_string and not setting.findn(search_string) != -1:
+					continue
+				list.push_back(setting)
 		
-	_quick_sort_by_file_name(list, 0, list.size() - 1)
+	_quick_sort_by_file_name(list, 0, list.size() - 1) if _current_filter_displays_files() else list.sort()
 	for index in list.size():
 		var file_name = list[index].get_file()
 		item_list.add_item(" " + String(index) + "  :: ", null, false)
-		item_list.add_item(" " + file_name)
+			
+		if current_filter == FILTER.SETTINGS:
+			item_list.add_item("Editor :: " if editor_settings.has(list[index]) else "Project :: ", null, false)
+			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			
+		item_list.add_item(file_name if _current_filter_displays_files() else list[index])
 		if scenes.has(list[index]):
 			item_list.set_item_icon(item_list.get_item_count() - 1, scenes[list[index]].Icon)
-		else:
-			item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[list[index]].Icon if scripts.has(list[index]) else other_files[list[index]].Icon)
-		item_list.add_item(_format_string(list[index].get_base_dir()))
-		item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+		elif scripts.has(list[index]):
+			item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[list[index]].Icon)
+		elif other_files.has(list[index]):
+			item_list.set_item_icon(item_list.get_item_count() - 1, other_files[list[index]].Icon)
+		
+		if current_filter != FILTER.SETTINGS:
+			if _current_filter_displays_files():
+				item_list.add_item(_format_string(list[index].get_base_dir()))
+			else:
+				item_list.add_item("", null, false)
+				item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+			item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
 
 
 func _build_node_list(root : Node, search_string : String):
-	if search_string:
-		if root.name.findn(search_string) != -1:
-			item_list.add_item("", null, false)
-			if root == INTERFACE.get_edited_scene_root():
-				item_list.add_item(String(INTERFACE.get_edited_scene_root().get_path_to_to(root)), null, false)
-			else:
-				item_list.add_item(String(INTERFACE.get_edited_scene_root().get_path_to(root.get_parent())).rsplit("/", true, 1)[0] + "/", null, false)
-			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
-			item_list.add_item(root.name)
-	else:
-			item_list.add_item("", null, false)
-			if root == INTERFACE.get_edited_scene_root():
-				item_list.add_item(String(INTERFACE.get_edited_scene_root().get_path_to(root)), null, false)
-			else:
-				item_list.add_item(String(INTERFACE.get_edited_scene_root().get_path_to(root.get_parent())).rsplit("/", true, 1)[0] + "/", null, false)
-			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
-			item_list.add_item(root.name)
+	if not search_string or root.name.findn(search_string) != -1:
+		item_list.add_item("", null, false)
+		if root == INTERFACE.get_edited_scene_root():
+			item_list.add_item(".", null, false)
+		elif root.get_parent() == INTERFACE.get_edited_scene_root():
+			item_list.add_item("./", null, false)
+		else:
+			item_list.add_item("./" + String(INTERFACE.get_edited_scene_root().get_path_to(root.get_parent())) + "/", null, false)
+		item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+		item_list.add_item(root.name)
 		
 	for child in root.get_children():
 		_build_node_list(child, search_string)
@@ -728,7 +743,8 @@ func _adapt_list_height() -> void:
 		var rows = max(item_list.get_item_count() / item_list.max_columns, 1) + 1
 		var margin = filter.rect_size.y + $MarginContainer.margin_top + abs($MarginContainer.margin_bottom) \
 				+ $MarginContainer/Content/VBoxContainer/MarginContainer.get("custom_constants/margin_top") \
-				+ $MarginContainer/Content/VBoxContainer/MarginContainer.get("custom_constants/margin_bottom") + max(current_label.rect_size.y, last_label.rect_size.y)
+				+ $MarginContainer/Content/VBoxContainer/MarginContainer.get("custom_constants/margin_bottom") \
+				+ max(current_label.rect_size.y, last_label.rect_size.y)
 		var height = row_height * rows + margin
 		rect_size.y = clamp(height, 0, max_popup_size.y)
 
@@ -776,3 +792,34 @@ func _partition(array : Array, lo : int, hi : int):
 		var tmp = array[i]
 		array[i] = array[j]
 		array[j] = tmp
+
+
+func _current_filter_displays_files() -> bool:
+	return not current_filter in [FILTER.SNIPPETS, FILTER.METHODS, FILTER.SIGNALS, FILTER.ADD_SCRIPT, FILTER.SETTINGS] \
+			and not filter.text.begins_with(keyword_goto_line)
+
+
+func _update_editor_settings() -> void:
+	for setting in INTERFACE.get_editor_settings().get_property_list():
+		if setting.name:
+			# general settings only
+			if setting.name.begins_with("interface/") or setting.name.begins_with("filesystem/") or setting.name.begins_with("docks/")\
+					or setting.name.begins_with("text_editor/") or setting.name.begins_with("editors/") or setting.name.begins_with("run/")\
+					or setting.name.begins_with("network/") or setting.name.begins_with("project_manager/") or setting.name.begins_with("asset_library/")\
+					or setting.name.begins_with("export/") or setting.name.begins_with("debugger/"):
+				editor_settings[setting.name] = setting
+
+
+func _update_project_settings() -> void:
+	for setting in ProjectSettings.get_property_list():
+		if setting.name:
+			# general settings only
+			if setting.name.begins_with("application/") or setting.name.begins_with("debug/") \
+					or setting.name.begins_with("compression/") or setting.name.begins_with("network/") \
+					or setting.name.begins_with("memory/") or setting.name.begins_with("logging/") \
+					or setting.name.begins_with("rendering/") or setting.name.begins_with("display/") \
+					or setting.name.begins_with("physics/") or setting.name.begins_with("input_devices/") \
+					or setting.name.begins_with("gui/") or setting.name.begins_with("layer_names/") or setting.name.begins_with("filesystem/") \
+					or setting.name.begins_with("locale/") or setting.name.begins_with("editor_plugins/") or setting.name.begins_with("node/") \
+					or setting.name.begins_with("audio/") or setting.name.begins_with("editor/") or setting.name.begins_with("android/") :
+				project_settings[setting.name] = setting

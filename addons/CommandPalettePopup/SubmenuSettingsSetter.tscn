@@ -1,0 +1,188 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://addons/CommandPalettePopup/SubmenuSettingsSetter.gd" type="Script" id=1]
+
+[sub_resource type="StyleBoxEmpty" id=1]
+
+[sub_resource type="StyleBoxEmpty" id=2]
+
+[sub_resource type="StyleBoxEmpty" id=3]
+
+[sub_resource type="StyleBoxEmpty" id=4]
+
+[sub_resource type="Image" id=5]
+data = {
+"data": PoolByteArray( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ),
+"format": "LumAlpha8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id=6]
+flags = 4
+flags = 4
+image = SubResource( 5 )
+size = Vector2( 16, 16 )
+
+[node name="SubmenuSettingsSetter" type="WindowDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+window_title = "Edit Settings"
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PathLabel" type="Label" parent="VBoxContainer"]
+margin_right = 1024.0
+margin_bottom = 14.0
+text = "serserse"
+align = 1
+valign = 1
+autowrap = true
+
+[node name="MarginContainer2" type="MarginContainer" parent="VBoxContainer"]
+margin_top = 263.0
+margin_right = 1024.0
+margin_bottom = 301.0
+size_flags_horizontal = 7
+size_flags_vertical = 6
+custom_constants/margin_right = 55
+custom_constants/margin_left = 55
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer2"]
+margin_left = 55.0
+margin_right = 969.0
+margin_bottom = 38.0
+size_flags_horizontal = 3
+
+[node name="TabContainer" type="TabContainer" parent="VBoxContainer/MarginContainer2/VBoxContainer"]
+self_modulate = Color( 1, 1, 1, 0 )
+margin_right = 914.0
+margin_bottom = 38.0
+size_flags_vertical = 3
+custom_styles/tab_fg = SubResource( 1 )
+custom_styles/tab_disabled = SubResource( 2 )
+custom_styles/tab_bg = SubResource( 3 )
+custom_styles/panel = SubResource( 4 )
+tabs_visible = false
+
+[node name="CheckBox" type="CheckBox" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "On"
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_min_size = Vector2( 100, 0 )
+align = 1
+
+[node name="SpinBox" type="SpinBox" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_min_size = Vector2( 100, 0 )
+focus_mode = 2
+align = 1
+
+[node name="FileFolderLineEdit" type="HBoxContainer" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_min_size = Vector2( 150, 0 )
+size_flags_horizontal = 3
+
+[node name="LineEdit" type="LineEdit" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer/FileFolderLineEdit"]
+margin_right = 914.0
+margin_bottom = 328.0
+rect_min_size = Vector2( 100, 0 )
+size_flags_horizontal = 3
+
+[node name="ToolButton" type="ToolButton" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer/FileFolderLineEdit"]
+visible = false
+margin_left = 104.0
+margin_right = 116.0
+margin_bottom = 38.0
+icon = SubResource( 6 )
+
+[node name="FileDialog" type="FileDialog" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer/FileFolderLineEdit"]
+margin_right = 307.0
+margin_bottom = 130.0
+window_title = "Open a File"
+mode = 0
+access = 2
+show_hidden_files = true
+current_dir = "/home/toni/Desktop/CommandPalette"
+current_path = "/home/toni/Desktop/CommandPalette/"
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_min_size = Vector2( 100, 0 )
+size_flags_horizontal = 3
+
+[node name="MarginContainer3" type="MarginContainer" parent="VBoxContainer"]
+visible = false
+margin_top = 284.0
+margin_right = 1024.0
+margin_bottom = 546.0
+size_flags_vertical = 3
+custom_constants/margin_right = 25
+custom_constants/margin_left = 25
+
+[node name="HintLabel" type="Label" parent="VBoxContainer/MarginContainer3"]
+margin_left = 25.0
+margin_top = 124.0
+margin_right = 999.0
+margin_bottom = 138.0
+size_flags_horizontal = 7
+align = 1
+valign = 1
+autowrap = true
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+margin_top = 550.0
+margin_right = 1024.0
+margin_bottom = 600.0
+rect_min_size = Vector2( 0, 50 )
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+margin_right = 1024.0
+margin_bottom = 50.0
+custom_constants/separation = 25
+alignment = 1
+
+[node name="AcceptButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+margin_left = 444.0
+margin_top = 15.0
+margin_right = 500.0
+margin_bottom = 35.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Accept"
+
+[node name="CancelButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+margin_left = 525.0
+margin_top = 15.0
+margin_right = 579.0
+margin_bottom = 35.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Cancel"
+[connection signal="dir_selected" from="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer/FileFolderLineEdit/FileDialog" to="." method="_on_FileDialog_dir_selected"]
+[connection signal="file_selected" from="VBoxContainer/MarginContainer2/VBoxContainer/TabContainer/FileFolderLineEdit/FileDialog" to="." method="_on_FileDialog_file_selected"]
