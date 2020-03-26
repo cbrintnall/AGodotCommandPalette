@@ -4,11 +4,8 @@
 [color=aqua]%s [/color] will show all scripts and scenes.
 [color=aqua]%s [/color] will show all scripts.
 [color=aqua]%s [/color] will show all scenes.
-[color=aqua]%s [/color] will show the open scripts and scenes.
 [color=aqua]%s [/color] followed by a number will jump to that line in the script editor when activating the filter or ending the search_string with a space.
 [color=aqua]%s [/color] will list the methods of the current script with the line number. Activating the method will jump to that line in the script.
-[color=aqua]%s [/color] will list all signals of the current scene root. Activating a signal will insert the signal connection at the cursor position with the cursor position moving to the signal target. The signal method will be copied to the clipboard.
-[color=aqua]%s [/color] will show the code snippets. Activating a snippet will insert it at the cursor position. Custom snippets can be created by editing CodeSnippets.cfg. The sections are the names shown in the item_list. "body" is the only section key, which has to be defined. Adding an [color=aqua]%s[/color] into the snippet will make the cursor jump to that position when inserting the snippet. By default a few virtual methods are implemented.
 
 [color=aqua]Ending[/color] the search_string with [color=aqua]  X[/color], where X is an integer, will jump to the X-th item in the list.
 
