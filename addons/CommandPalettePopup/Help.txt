@@ -1,23 +1,25 @@
 [color=aqua]All open scripts[/color] will be shown by default.
+[color=aqua]%s [/color] will show the open scenes. 
+The "open file" filters will match the search_string against the file name.
 
 [color=aqua]%s [/color] will show all scripts, scenes and other files.
-[color=aqua]%s [/color] will show all scripts.
 [color=aqua]%s [/color] will show all scenes.
-[color=aqua]%s [/color] will show the open scenes.
-[color=aqua]%s [/color] followed by a number will jump to that line in the script editor when activating the filter or ending the search_string with a space.
-[color=aqua]Ending[/color] the search_string with [color=aqua]  X[/color], where X is an integer, will jump to the X-th item in the list.
-[color=aqua]%s [/color] will list the methods of the current script with the line number. Activating the method will jump to that line in the script.
-[color=aqua]%s [/color] will list all nodes of the current scene. Activationg a node will select it in the scene tree dock. While the filter is active, you can add a new script to the currently selected node in the list by using the button to the right of the filter.
-[color=aqua]%s [/color] will list all project and editor settings. Activating one will open the setting and select the property. While the filter is active a, you can add a new project setting by using the button besides the filter.
+[color=aqua]%s [/color] (c as in Code file) will show all scripts.
+Selecting the file path will jump to the file in the filesystem dock.
+[color=aqua]%s [/color] will list all nodes of the current scene. Activating a node will select it in the scene tree dock. While the filter is active, you can add a new script to the currently selected node in the list by using the button to the right of the filter.
+[color=aqua]%s [/color] will list all project and editor settings. Activating one will open the setting and select the property. While the filter is active, you can add a new project setting by using the button besides the filter.
+These filters will match the search_string against the entire file/node/settings path. Wildcards are allowed and a * will be automatically inserted at the beginning and end of the search_string. All spaces in the search_string will be replaced with a *.
 
-Ending the search_string with "  " while the filter for all files, nodes of the current scene, settings or adding a setting is active, will autocomplete (part) of the path.
+[color=aqua]%s [/color] followed by a number will jump to that line in the script editor when activating the filter or ending the search_string with a space.
+[color=aqua]%s [/color] will list the methods of the current script with the line number. Activating the method will jump to that line in the script.
+
+Ending the search_string with  X (space + int), where X is an integer, will jump to the X-th item in the list.
+Ending the search_string with "  " (double space) while the filter for all files, nodes of the current scene, settings or adding a setting is active, will autocomplete (part) of the path.
 
 Opening a script will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
-
-Selecting the file path will jump to the file in the filesystem dock.
 
 While the popup is visible, pressing the shortcut again will switch to the last open file. The two labels at the bottom show the current and the last file opened with this plugin. 
 
 A copy button to quickly copy the file, node or settings path to the clipboard is available.
 
-Some export vars are exposed. Reopen the project after changing those or other things in the inspector of this plugin.
+Some vars are exposed as exports of the .tscn file. Reopen the project after changing those or other things in the inspector of this plugin.

@@ -99,7 +99,7 @@ func _on_main_screen_changed(new_screen : String) -> void:
 
 
 func _on_script_created(script : Script) -> void:
-	if script_added_to:
+	if script_added_to: # script was created with this plugin
 		script_added_to.set_script(script)
 		if script_added_to.filename:
 			script.set_meta("Scene_Path", script_added_to.filename)
@@ -145,7 +145,6 @@ func _on_copy_button_pressed() -> void:
 		if current_filter == FILTER.SETTINGS:
 			OS.clipboard =  "\"" + item_list.get_item_text(selection[0]) + "\""
 		
-		# selection is a file name
 		elif _current_filter_displays_files():
 			var path : String = ""
 			if current_filter in [FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS]:
@@ -168,7 +167,6 @@ func _on_popup_hide() -> void:
 
 
 func _on_item_list_selected(index : int) -> void:
-	# selection is a file path
 	if _current_filter_displays_files():
 		if current_filter in [FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS] and index % item_list.max_columns == 2:
 			INTERFACE.select_file(item_list.get_item_text(index) + "/" + item_list.get_item_text(index - 1).strip_edges())
@@ -191,19 +189,19 @@ func _on_filter_text_changed(new_txt : String) -> void:
 					key = keyword
 					break
 			var search_string = filter.text.substr(key.length()).strip_edges()
-			var path_to_select : String = ""
+			var path_to_autocomplete : String = ""
 			
 			if key in [keyword_all_files, keyword_all_scenes, keyword_all_scripts, keyword_select_node]:
-				path_to_select = item_list.get_item_text(selection[0] - 1)
+				path_to_autocomplete = item_list.get_item_text(selection[0] - 1)
 			elif key in [keyword_editor_settings]:
-				path_to_select = item_list.get_item_text(selection[0])
+				path_to_autocomplete = item_list.get_item_text(selection[0])
 			
-			var pos = max(path_to_select.find(search_string), 0)
-			var end_pos = path_to_select.find("/", pos + search_string.length()) + 1
-			path_to_select = path_to_select.substr(0, end_pos if end_pos else -1)
-			if path_to_select == "res:/":
-				path_to_select = "res://"
-			filter.text = key + path_to_select
+			var start_pos = max(path_to_autocomplete.findn(search_string), 0)
+			var end_pos = path_to_autocomplete.find("/", start_pos + search_string.length()) + 1
+			path_to_autocomplete = path_to_autocomplete.substr(0, end_pos if end_pos else -1)
+			if path_to_autocomplete == "res:/":
+				path_to_autocomplete = "res://"
+			filter.text = key + path_to_autocomplete
 			filter.caret_position = filter.text.length()
 	
 	rect_size = max_popup_size
@@ -270,8 +268,9 @@ func _activate_item(selected_index : int = -1) -> void:
 
 func _open_settings(setting_path : Array, setting_name : String, editor : bool = true) -> void:
 	var popup : PopupMenu = INTERFACE.get_base_control().get_child(1).get_child(0).get_child(0).get_child(3 if editor else 1).get_child(0)
+	yield(get_tree(), "idle_frame") # otherwise windows don't get dimmed
 	popup.emit_signal("id_pressed", 59 if editor else 43) # settings get pushed to the last pos, if it's opened
-		
+	
 	var SETTINGS_DIALOG = INTERFACE.get_base_control().get_child(INTERFACE.get_base_control().get_child_count() - 1) 
 	var SETTINGS_TREE : Tree = SETTINGS_DIALOG.get_child(3).get_child(0).get_child(1).get_child(0).get_child(0)
 	var SETTINGS_INSPECTOR = SETTINGS_DIALOG.get_child(3).get_child(0).get_child(1).get_child(1).get_child(0)
@@ -293,7 +292,7 @@ func _property_editor_grab_focus(node : Node, settings_name : String):
 		if node.label == settings_name:
 			node = node.get_child(0)
 			while(node is Container): # TOFIXME potentially error prone
-				node = node.get_child(0)
+				node = node.get_child(0) # TOFIXME potentially error prone
 			node.grab_focus()
 	else:
 		for child in node.get_children():
@@ -625,8 +624,8 @@ func _count_node_list():
 func _build_help_page() -> void:
 	var file = File.new()
 	file.open("res://addons/CommandPalettePopup/Help.txt", File.READ)
-	info_box.bbcode_text = file.get_as_text() % [keyword_all_open_scenes, keyword_all_files, keyword_all_scripts, \
-			keyword_all_scenes, keyword_goto_line, keyword_goto_method]
+	info_box.bbcode_text = file.get_as_text() % [keyword_all_open_scenes, keyword_all_files, keyword_all_scenes, keyword_all_scripts, \
+			keyword_select_node, keyword_editor_settings, keyword_goto_line, keyword_goto_method]
 	file.close()
 
 
@@ -671,7 +670,7 @@ func _partition(array : Array, lo : int, hi : int):
 
 
 func _current_filter_displays_files() -> bool:
-	return not current_filter in [FILTER.GOTO_METHOD, FILTER.SELECT_NODE, FILTER.SETTINGS, FILTER.HELP, FILTER.GOTO_LINE, FILTER.GOTO_METHOD]
+	return not current_filter in [FILTER.SELECT_NODE, FILTER.SETTINGS, FILTER.HELP, FILTER.GOTO_LINE, FILTER.GOTO_METHOD]
 
 
 func _update_editor_settings() -> void: # connected to editor settings_changed signal in plugin.gd

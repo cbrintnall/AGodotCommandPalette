@@ -91,7 +91,7 @@ func _predict_path() -> void:
 				max_length = prediction.length()
 			prediction_list.show()
 			prediction_list.rect_global_position = Vector2(path.rect_global_position.x + path.text.length() * 8, path.rect_global_position.y + path.rect_size.y)
-			prediction_list.set_deferred("rect_size", Vector2(max_length * 11, prediction_list.get_item_count() * 15))
+			prediction_list.set_deferred("rect_size", Vector2(max_length * 8, prediction_list.get_item_count() * 15) * screen_factor)
 
 
 func _on_SaveButton_pressed() -> void:
