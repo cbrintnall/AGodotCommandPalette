@@ -25,6 +25,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 func _show() -> void:
 	_update_hints()
+	prediction_list.hide()
 	popup_centered(Vector2(750, 350) * screen_factor)
 
 
@@ -46,24 +47,51 @@ func _reset_mask() -> void:
 	info_label.text = "\"False\"/\"false\" as the value will set the setting to false. Any other non-empty string will set it to true."
 
 
+func _on_PathLineEdit_focus_entered() -> void:
+	_predict_path()
+
+
+func _on_PathLineEdit_focus_exited() -> void:
+	prediction_list.hide()
+
+
 func _on_CancelButton_pressed() -> void:
 	hide()
 
 
 func _on_PathLineEdit_text_changed(new_text: String) -> void:
-	var search_string : String = path.text
+	if new_text.ends_with("  ") and prediction_list.get_item_count() > 0:
+		var pos = max(new_text.find_last("/"), 0)
+		path.text = new_text.substr(0, pos) + prediction_list.get_item_text(0)
+		path.caret_position = path.text.length()
+	_predict_path()
+
+
+func _predict_path() -> void:
+	prediction_list.hide()
+	prediction_list.clear()
+	var search_string : String = path.text.strip_edges()
 	var settings = get_parent().project_settings.keys()
 	settings.sort()
 	var preds = [" "]
-	var res = []
-	for path in settings:
-		if path.begins_with(preds[preds.size() - 1]):
+	var max_length = 0
+	for _path in settings:
+		if _path.begins_with(preds[preds.size() - 1]):
 			continue
-		if path.begins_with(search_string):
+		elif search_string == _path:
+			prediction_list.clear()
+			break
+		elif _path.begins_with(search_string):
 			var pos = max(search_string.find_last("/"), 0)
-			var end_pos = path.find("/", pos + 1)
-			var prediction = path.substr(pos, end_pos - pos if end_pos != -1 else -1)
-			preds.push_back(path.substr(0, end_pos))
+			var end_pos = _path.find("/", pos + 1)
+			var prediction = _path.substr(pos, end_pos - pos + 1 if end_pos != -1 else -1)
+			preds.push_back(_path.substr(0, end_pos))
+			prediction_list.add_item(prediction)
+			if max_length < prediction.length():
+				max_length = prediction.length()
+			prediction_list.show()
+			prediction_list.rect_global_position = Vector2(path.rect_global_position.x + path.text.length() * 8, path.rect_global_position.y + path.rect_size.y)
+			prediction_list.set_deferred("rect_size", Vector2(max_length * 11, prediction_list.get_item_count() * 15))
 
 
 func _on_SaveButton_pressed() -> void:
@@ -296,6 +324,7 @@ func _update_hints() -> void:
 					hint.set_item_disabled(hint_index, true)
 	
 	hint.set_item_disabled(0, false)
+
 
 func _on_HintButton_item_selected(id: int) -> void: # hint changed
 	match hint.get_selected_id():

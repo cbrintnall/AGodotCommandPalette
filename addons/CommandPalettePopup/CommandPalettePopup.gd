@@ -2,7 +2,6 @@ tool
 extends WindowDialog
 
 
-onready var settings_setter : WindowDialog = $SettingsSetter
 onready var settings_adder : WindowDialog = $SettingsAdder
 onready var filter = $PaletteMarginContainer/VBoxContainer/SearchFilter/MarginContainer/Filter
 onready var item_list = $PaletteMarginContainer/VBoxContainer/MarginContainer/TabContainer/ItemList
@@ -54,12 +53,7 @@ var FILE_SYSTEM : EditorFileSystem
 var SCRIPT_CREATE_DIALOG : ScriptCreateDialog
 var EDITOR_SETTINGS : EditorSettings
 
-	# TODO wildcards - for ALL paths, spaces will be replaced with *; for OPEN ones still just filename, removed cs keyword
-	# TODO move code snippets/and signals into their own plugin
-	# TODO add project settings
-	# TODO select nodes
-	# TODO add autocompletion on add setting, node paths and ALL file paths
-# TODO update readme, screenshot, help page
+# TODO select property in Inspector?
 
 func _ready() -> void:
 	connect("popup_hide", self, "_on_popup_hide")
@@ -240,11 +234,12 @@ func _activate_item(selected_index : int = -1) -> void:
 	var selected_name = item_list.get_item_text(selected_index).strip_edges()
 	
 	if current_filter == FILTER.SETTINGS:
-		if item_list.get_item_text(selected_index - 1).begins_with("Project"):
-			settings_setter._show(project_settings[item_list.get_item_text(selected_index)], "Project_Settings", ProjectSettings)
+		var setting_path = Array(selected_name.split("/"))
+		var setting_name = setting_path.pop_back().capitalize()
+		if item_list.get_item_text(selected_index - 1).findn("Project") != -1:
+			_open_settings(setting_path, setting_name, false)
 		else:
-			settings_setter._show(editor_settings[item_list.get_item_text(selected_index)], "Editor_Settings", EDITOR_SETTINGS)
-		return
+			_open_settings(setting_path, setting_name)
 	
 	elif current_filter == FILTER.GOTO_METHOD:
 		var line = item_list.get_item_text(selected_index + 1).split(":")[1].strip_edges()
@@ -271,6 +266,38 @@ func _activate_item(selected_index : int = -1) -> void:
 		_open_selection(path)
 	
 	hide()
+
+
+func _open_settings(setting_path : Array, setting_name : String, editor : bool = true) -> void:
+	var popup : PopupMenu = INTERFACE.get_base_control().get_child(1).get_child(0).get_child(0).get_child(3 if editor else 1).get_child(0)
+	popup.emit_signal("id_pressed", 59 if editor else 43) # settings get pushed to the last pos, if it's opened
+		
+	var SETTINGS_DIALOG = INTERFACE.get_base_control().get_child(INTERFACE.get_base_control().get_child_count() - 1) 
+	var SETTINGS_TREE : Tree = SETTINGS_DIALOG.get_child(3).get_child(0).get_child(1).get_child(0).get_child(0)
+	var SETTINGS_INSPECTOR = SETTINGS_DIALOG.get_child(3).get_child(0).get_child(1).get_child(1).get_child(0)
+	SETTINGS_INSPECTOR.follow_focus = true
+	var tree_item : TreeItem = SETTINGS_TREE.get_root()
+	for i in min(setting_path.size(), 2): # Inspector sections dont count, so only max 2
+		tree_item = tree_item.get_children()
+		var curr_path = setting_path.pop_front().capitalize()
+		while tree_item.get_text(0) != curr_path:
+			tree_item = tree_item.get_next()
+	tree_item.select(0)
+	
+	yield(get_tree().create_timer(0.02), "timeout")
+	_property_editor_grab_focus(SETTINGS_INSPECTOR.get_child(0), setting_name)
+
+
+func _property_editor_grab_focus(node : Node, settings_name : String):
+	if node is EditorProperty:
+		if node.label == settings_name:
+			node = node.get_child(0)
+			while(node is Container): # TOFIXME potentially error prone
+				node = node.get_child(0)
+			node.grab_focus()
+	else:
+		for child in node.get_children():
+			_property_editor_grab_focus(child, settings_name)
 
 
 func _open_selection(path : String) -> void:
@@ -647,7 +674,7 @@ func _current_filter_displays_files() -> bool:
 	return not current_filter in [FILTER.GOTO_METHOD, FILTER.SELECT_NODE, FILTER.SETTINGS, FILTER.HELP, FILTER.GOTO_LINE, FILTER.GOTO_METHOD]
 
 
-func _update_editor_settings() -> void: # connected to editor settings_changed signal
+func _update_editor_settings() -> void: # connected to editor settings_changed signal in plugin.gd
 	for setting in EDITOR_SETTINGS.get_property_list():
 		# general settings only
 		if setting.name and setting.name.find("/") != -1 and setting.usage & PROPERTY_USAGE_EDITOR and not setting.name.begins_with("favorite_projects/"):
@@ -679,29 +706,6 @@ func _switch_to_recent_file() -> void:
 func _on_AddButton_pressed() -> void:
 	if filter.text.begins_with(keyword_editor_settings):
 		settings_adder._show()
-		
-		
-#		var setting_path = Array(item_list.get_item_text(item_list.get_selected_items()[0]).split("/"))
-#		var setting_name = setting_path.pop_back().capitalize()
-#
-#		var popup : PopupMenu = INTERFACE.get_base_control().get_child(1).get_child(0).get_child(0).get_child(3).get_child(0)
-#		popup.emit_signal("id_pressed", 59)
-#		var settings = INTERFACE.get_base_control().get_child(INTERFACE.get_base_control().get_child_count() - 1)
-#		var sectionedinspec = settings.get_child(3).get_child(0).get_child(1)
-#		var tree : Tree = sectionedinspec.get_child(0).get_child(0)
-#		var inspec = sectionedinspec.get_child(1).get_child(0).get_child(0) # möglicherweise mehr als nur 1 kind als vbox wg sections
-#
-#
-#		var tree_item : TreeItem = tree.get_root()
-#		while setting_path:
-#			tree_item = tree_item.get_children()
-#			var sname = setting_path.pop_front().capitalize()
-#			while tree_item.get_text(0) != sname:
-#				tree_item = tree_item.get_next()
-#		tree_item.select(0)
-#		yield(.get_tree().create_timer(.1), "timeout")
-#		tree.ensure_cursor_is_visible()
-#		rec(inspec, setting_name)
 	
 	elif filter.text.begins_with(keyword_select_node):
 		var selection = item_list.get_selected_items()
@@ -714,14 +718,3 @@ func _on_AddButton_pressed() -> void:
 			SCRIPT_CREATE_DIALOG.config(script_added_to.get_class(), (file_path if file_path else "res:/") + "/" + selected_name + ".gd")
 			SCRIPT_CREATE_DIALOG.popup_centered()
 		hide()
-
-#func rec(node : Node, sname : String):
-#	if node is EditorProperty:
-#		if node.label == sname:
-#			node = node.get_child(0)
-#			while(node is Container):
-#				node = node.get_child(0)
-#			node.grab_focus()
-#	else:
-#		for child in node.get_children():
-#			rec(child, sname)

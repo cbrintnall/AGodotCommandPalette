@@ -2,7 +2,7 @@
 
 [ext_resource path="res://addons/CommandPalettePopup/SettingsAdder.gd" type="Script" id=1]
 
-[sub_resource type="Image" id=4]
+[sub_resource type="Image" id=1]
 data = {
 "data": PoolByteArray( 23, 22, 26, 111, 29, 28, 33, 239, 32, 30, 36, 247, 33, 31, 37, 247, 33, 31, 37, 247, 33, 31, 37, 247, 33, 31, 37, 247, 32, 30, 36, 247, 29, 28, 33, 239, 23, 22, 26, 111, 29, 28, 33, 240, 36, 34, 41, 255, 40, 38, 45, 255, 40, 38, 46, 255, 40, 38, 46, 255, 40, 38, 46, 255, 40, 38, 46, 255, 40, 38, 45, 255, 36, 34, 41, 255, 29, 28, 33, 240, 32, 30, 36, 249, 40, 38, 45, 255, 43, 42, 49, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 43, 42, 49, 255, 40, 38, 45, 255, 32, 30, 36, 249, 33, 31, 37, 247, 40, 38, 46, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 40, 38, 46, 255, 33, 31, 37, 247, 33, 31, 37, 247, 40, 38, 46, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 40, 38, 46, 255, 33, 31, 37, 247, 33, 31, 37, 247, 40, 38, 46, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 40, 38, 46, 255, 33, 31, 37, 247, 33, 31, 37, 247, 40, 38, 46, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 40, 38, 46, 255, 33, 31, 37, 247, 32, 30, 36, 249, 40, 38, 45, 255, 43, 42, 49, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 44, 42, 50, 255, 43, 42, 49, 255, 40, 38, 45, 255, 32, 30, 36, 249, 29, 28, 33, 240, 36, 34, 41, 255, 40, 38, 45, 255, 40, 38, 46, 255, 40, 38, 46, 255, 40, 38, 46, 255, 40, 38, 46, 255, 40, 38, 45, 255, 36, 34, 41, 255, 29, 28, 33, 241, 23, 22, 26, 111, 29, 28, 33, 240, 32, 30, 36, 247, 33, 31, 37, 247, 33, 31, 37, 247, 33, 31, 37, 247, 33, 31, 37, 247, 32, 30, 36, 247, 29, 28, 33, 238, 23, 22, 26, 111 ),
 "format": "RGBA8",
@@ -14,7 +14,7 @@ data = {
 [sub_resource type="ImageTexture" id=2]
 flags = 4
 flags = 4
-image = SubResource( 4 )
+image = SubResource( 1 )
 size = Vector2( 10, 10 )
 
 [sub_resource type="StyleBoxTexture" id=3]
@@ -188,20 +188,22 @@ text = "\"False\"/\"false\" as the value will set the setting to false. Any othe
 autowrap = true
 
 [node name="PredictionList" type="ItemList" parent="."]
-margin_left = 201.485
-margin_top = 171.477
-margin_right = 271.485
-margin_bottom = 185.477
-
-[node name="PredictionPopup" type="PopupPanel" parent="."]
-margin_right = 78.0
-margin_bottom = 22.0
+visible = false
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 74.0
+margin_bottom = 18.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+auto_height = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
 [connection signal="about_to_show" from="." to="." method="_on_AddSetting_about_to_show"]
 [connection signal="popup_hide" from="." to="." method="_on_AddSetting_popup_hide"]
 [connection signal="item_selected" from="MarginContainer/VBoxContainer/TypeValueHB/OptionButton" to="." method="_on_OptionButton_item_selected"]
+[connection signal="focus_entered" from="MarginContainer/VBoxContainer/PathHB/PathLineEdit" to="." method="_on_PathLineEdit_focus_entered"]
+[connection signal="focus_exited" from="MarginContainer/VBoxContainer/PathHB/PathLineEdit" to="." method="_on_PathLineEdit_focus_exited"]
 [connection signal="text_changed" from="MarginContainer/VBoxContainer/PathHB/PathLineEdit" to="." method="_on_PathLineEdit_text_changed"]
 [connection signal="item_selected" from="MarginContainer/VBoxContainer/HintHintStringHB/OptionButton" to="." method="_on_HintButton_item_selected"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsHB/CancelButton" to="." method="_on_CancelButton_pressed"]
