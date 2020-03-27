@@ -160,6 +160,9 @@ func _on_copy_button_pressed() -> void:
 			var path : String = ""
 			path = item_list.get_item_text(selected_index + 1) + selected_name if item_list.get_item_text(selected_index + 1).begins_with("./") else "."
 			OS.clipboard = "\"" + path + "\""
+		
+		elif current_filter == FILTER.INSPECTOR:
+			OS.clipboard = "\"" + item_list.get_item_text(selection[0]) + "\""
 	hide()
 
 
@@ -639,7 +642,7 @@ func _build_item_list(search_string : String) -> void:
 
 # select a node
 func _build_node_list(root : Node, search_string : String):
-	if not search_string or root.name.matchn("*" + search_string.replace(" ", "*") + "*"):
+	if not search_string or root.name.matchn("*" + search_string.strip_edges().replace(" ", "*") + "*"):
 		item_list.add_item("", null, false)
 		item_list.add_item(root.name)
 		
@@ -753,7 +756,7 @@ func _on_AddButton_pressed() -> void:
 		if selection:
 			var selected_index = selection[0]
 			var selected_name = item_list.get_item_text(selected_index).strip_edges()
-			var node_path = item_list.get_item_text(selected_index - 1).split("./")[1] + selected_name if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
+			var node_path = item_list.get_item_text(selected_index + 1) + selected_name if item_list.get_item_text(selected_index + 1).begins_with("./") else "."
 			script_added_to = INTERFACE.get_edited_scene_root().get_node(node_path)
 			var file_path = INTERFACE.get_edited_scene_root().filename.get_base_dir()
 			hide()
