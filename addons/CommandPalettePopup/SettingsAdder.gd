@@ -91,7 +91,7 @@ func _predict_path() -> void:
 				max_length = prediction.length()
 			prediction_list.show()
 			prediction_list.rect_global_position = Vector2(path.rect_global_position.x + path.text.length() * 8, path.rect_global_position.y + path.rect_size.y)
-			prediction_list.set_deferred("rect_size", Vector2(max_length * 8, prediction_list.get_item_count() * 15) * screen_factor)
+			prediction_list.set_deferred("rect_size", Vector2(max_length * 10, prediction_list.get_item_count() * 15) * screen_factor)
 
 
 func _on_SaveButton_pressed() -> void:
@@ -117,7 +117,7 @@ func _on_SaveButton_pressed() -> void:
 func _cast_value(text : String, type : int):
 	match type:
 		TYPE_BOOL:
-			return false if text.matchn("false") or not text else true
+			return false if text.strip_edges().matchn("false") or not text else true
 		
 		TYPE_INT:
 			return text as int
@@ -297,11 +297,6 @@ func _update_hints() -> void:
 	hint.select(0)
 	
 	match type.get_selected_id():
-		TYPE_BOOL, TYPE_NODE_PATH, TYPE_VECTOR2, TYPE_RECT2, TYPE_VECTOR3, TYPE_TRANSFORM2D, TYPE_PLANE, TYPE_QUAT, TYPE_AABB, TYPE_BASIS, TYPE_TRANSFORM, TYPE_DICTIONARY, TYPE_ARRAY, TYPE_REAL_ARRAY, TYPE_STRING_ARRAY, TYPE_VECTOR2_ARRAY, TYPE_VECTOR3_ARRAY, TYPE_COLOR_ARRAY:
-		# disable all hints
-			for hint_index in hint.get_item_count():
-				hint.set_item_disabled(hint_index, true)
-		
 		TYPE_INT, TYPE_REAL: 
 			for hint_index in hint.get_item_count():
 				if hint.get_item_id(hint_index) in [PROPERTY_HINT_RANGE, PROPERTY_HINT_ENUM]:
@@ -322,6 +317,10 @@ func _update_hints() -> void:
 					hint.set_item_disabled(hint_index, false)
 				else:
 					hint.set_item_disabled(hint_index, true)
+		_:
+		# disable all hints, TOFIXME: implement more hints
+			for hint_index in hint.get_item_count():
+				hint.set_item_disabled(hint_index, true)
 	
 	hint.set_item_disabled(0, false)
 

@@ -8,13 +8,14 @@ The "open file" filters will match the search_string against the file name.
 Selecting the file path will jump to the file in the filesystem dock.
 [color=aqua]%s [/color] will list all nodes of the current scene. Activating a node will select it in the scene tree dock. While the filter is active, you can add a new script to the currently selected node in the list by using the button to the right of the filter.
 [color=aqua]%s [/color] will list all project and editor settings. Activating one will open the setting and select the property. While the filter is active, you can add a new project setting by using the button besides the filter.
-These filters will match the search_string against the entire file/node/settings path. Wildcards are allowed and a * will be automatically inserted at the beginning and end of the search_string. All spaces in the search_string will be replaced with a *.
+[color=aqua]%s [/color] will list all properties from the inspector of the current node selection. Activating it will focus the property in the inspector.
+These filters will match the search_string against the entire path (except for the node paths). Wildcards are allowed and a * will be automatically inserted at the beginning and end of the search_string. All spaces in the search_string will be replaced with a *.
 
 [color=aqua]%s [/color] followed by a number will jump to that line in the script editor when activating the filter or ending the search_string with a space.
 [color=aqua]%s [/color] will list the methods of the current script with the line number. Activating the method will jump to that line in the script.
 
 Ending the search_string with  X (space + int), where X is an integer, will jump to the X-th item in the list.
-Ending the search_string with "  " (double space) while the filter for all files, nodes of the current scene, settings or adding a setting is active, will autocomplete (part) of the path.
+Ending the search_string with "  " (double space) while the filter for all files, settings or adding a setting is active, will autocomplete (part) of the path. When the "select a node" filter is active, it will select the node instead. Combine that with [color=aqua]%s [/color] to quickly edit properties with your keyboard.
 
 Opening a script will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
 
