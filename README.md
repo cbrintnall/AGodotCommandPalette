@@ -14,7 +14,6 @@
 - Starting the search_string with \":m \" will list the methods of the current script and enables you to jump to a selected method.
 - **1.4.0:** Project/Editor settings can be changed. New Project settings can be added as well.
 - **1.4.0:** Starting the search_string with "n " will list all nodes in the current scene. Activating a node will select it in the scene tree dock. While the filter is active, you can add new scripts to any of the nodes.
-- **1.4.0:** Scripts can be added to any node in the scene.
 - Pressing Ctrl+P (Command+P) while the popup is already open and no filter is applied will switch to the previously opened file (~~only works for files opened with this plugin~~ **1.4.0: it no longer matters how the file was opened**).
 
 - Opening a script also opens the scene, which the script is attached to. It only works if the script is attached to the scene root. This gives you autocompletion on the Node(Paths) and their methods.
@@ -31,4 +30,4 @@
 
 Either download it from the official Godot AssetLib (within Godot itself) or download the addons folder from GitHub (https://github.com/Leleat/CommandPalette) and move it to the root (res://) of your project. Enable the plugin in the project settings.
 
-[Preview](preview.png)
+![Preview](preview.png)
