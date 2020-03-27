@@ -5,7 +5,7 @@
 - **1.4.0:** Project/Editor settings can be changed. New Project settings can be added as well.
 - **1.4.0:** Starting the search_string with "n " will list all nodes in the current scene. Activating a node will select it in the scene tree dock. While the filter is active, you can add new scripts to any of the nodes.
 - **1.4.0:** List and select properties of nodes. Activating one will focus it in the inspector so you can edit it. 
-**1.4.0:** The code snippets have been moved to their own plugin with a dedicated keyboard shortcut (and some small improvements). See https://github.com/Leleat/AGodotCodeSnippetPlugin
+- **1.4.0:** The code snippets have been moved to their own plugin with a dedicated keyboard shortcut (and some small improvements). See https://github.com/Leleat/AGodotCodeSnippetPlugin
 - **1.4.0:** when using "a " non-scene/script files will be listed as well
 - **1.4.0:** it no longer matters how a file was opened when switching to the recent file
 
