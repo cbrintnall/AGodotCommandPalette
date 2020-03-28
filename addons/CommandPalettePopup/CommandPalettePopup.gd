@@ -29,7 +29,6 @@ export (String) var keyword_set_inspector = "set "
 export (Color) var secondary_color = Color(1, 1, 1, .3) # color for 3rd column in ItemList (file paths, additional_info...)
 export (bool) var adapt_popup_height = true
 export (bool) var show_full_path_in_recent_files = false
-export (bool) var keep_main_screen_when_selecting_node = true
 	
 var keywords = [keyword_goto_line, keyword_goto_method, keyword_all_files, keyword_all_scenes, keyword_all_scripts, \
 		keyword_all_open_scenes, keyword_select_node, keyword_editor_settings, keyword_set_inspector]
@@ -208,14 +207,10 @@ func _on_filter_text_changed(new_txt : String) -> void:
 				filter.caret_position = filter.text.length()
 			
 			elif current_filter == FILTER.SELECT_NODE:
-				var tmp = current_main_screen
 				var sel = INTERFACE.get_selection()
 				sel.clear()
-				var node_path = item_list.get_item_text(selection[0] - 1) + item_list.get_item_text(selection[0])
+				var node_path = item_list.get_item_text(selection[0] + 1) + item_list.get_item_text(selection[0])
 				sel.add_node(INTERFACE.get_edited_scene_root().get_node(node_path if node_path.begins_with("./") else "."))
-				if keep_main_screen_when_selecting_node:
-					yield(get_tree().create_timer(.01), "timeout")
-					INTERFACE.set_main_screen_editor(tmp)
 				filter.text = ""
 				filter.grab_focus()
 	
@@ -272,12 +267,8 @@ func _activate_item(selected_index : int = -1) -> void:
 	elif current_filter == FILTER.SELECT_NODE:
 		var selection = INTERFACE.get_selection()
 		selection.clear()
-		var node_path = item_list.get_item_text(selected_index - 1).split("./")[1] + selected_name if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
-		var tmp = current_main_screen
+		var node_path = item_list.get_item_text(selected_index + 1) + selected_name if item_list.get_item_text(selected_index + 1).begins_with("./") else "."
 		selection.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
-		if keep_main_screen_when_selecting_node:
-			yield(get_tree().create_timer(.01), "timeout")
-			INTERFACE.set_main_screen_editor(tmp)
 	
 	# files
 	else:
@@ -315,10 +306,15 @@ func _open_settings(setting_path : Array, setting_name : String, editor : bool =
 func _inspector_property_editor_grab_focus(settings_name : String, node : Node = INTERFACE.get_inspector().get_child(0)): # Inpsector dock is default
 	if node is EditorProperty:
 		if node.get_edited_property() == settings_name:
-			node = node.get_child(0)
-			while(node is Container): # TOFIXME potentially error prone
-				node = node.get_child(0) # TOFIXME potentially error prone
-			node.call_deferred("grab_focus")
+			# TOFIXME potentially error prone, needs a better way
+			while(node.get_child(0) is Container): 
+				node = node.get_child(0) 
+			for child in node.get_children():
+				if child.focus_mode != FOCUS_NONE:
+					child.call_deferred("grab_focus")
+					return
+			push_warning("Command Palette Plugin: Problem grabbing focus of a property/setting. " \
+					 + "Please open an issue on Github and tell me the property/setting you tried to set.")
 	else:
 		for child in node.get_children():
 			_inspector_property_editor_grab_focus(settings_name, child)
