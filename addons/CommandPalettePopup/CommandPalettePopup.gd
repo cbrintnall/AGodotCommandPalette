@@ -243,7 +243,12 @@ func _activate_item(selected_index : int = -1) -> void:
 	
 	if current_filter == FILTER.SETTINGS:
 		var setting_path = Array(selected_name.split("/"))
-		var setting_name = setting_path.pop_back()
+		var setting_name : String
+		if setting_path.size() == 4: # TOFIXME: this may not work for settings the user added
+			var tmp = setting_path.pop_back()
+			setting_name = setting_path.pop_back() + "/" + tmp
+		else:
+			setting_name = setting_path.pop_back()
 		if item_list.get_item_text(selected_index - 1).findn("Project") != -1:
 			_open_settings(setting_path, setting_name, false)
 		else:
