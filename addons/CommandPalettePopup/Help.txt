@@ -10,6 +10,7 @@ Selecting the file path will jump to the file in the filesystem dock.
 [color=aqua]%s [/color] will list all project and editor settings. Activating one will open the setting and select the property. While the filter is active, you can add a new project setting by using the button besides the filter.
 [color=aqua]%s [/color] will list all properties from the inspector of the current node selection. Activating it will focus the property in the inspector.
 These filters will match the search_string against the entire path (except for the node paths). Wildcards are allowed and a * will be automatically inserted at the beginning and end of the search_string. All spaces in the search_string will be replaced with a *.
+[color=aqua]%s [/color] will traverse the file tree.
 
 [color=aqua]%s [/color] followed by a number will jump to that line in the script editor when activating the filter or ending the search_string with a space.
 [color=aqua]%s [/color] will list the methods of the current script with the line number. Activating the method will jump to that line in the script.
