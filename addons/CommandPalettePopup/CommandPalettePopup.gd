@@ -752,7 +752,7 @@ func _build_help_page() -> void:
 	var file = File.new()
 	file.open("res://addons/CommandPalettePopup/Help.txt", File.READ)
 	info_box.bbcode_text = file.get_as_text() % [keyword_all_open_scenes, keyword_all_files, keyword_all_scenes, keyword_all_scripts, \
-			keyword_select_node, keyword_editor_settings,keyword_set_inspector, keyword_goto_line, keyword_goto_method, keyword_set_inspector]
+			keyword_select_node, keyword_editor_settings,keyword_set_inspector, keyword_folder_tree, keyword_goto_line, keyword_goto_method, keyword_set_inspector]
 	file.close()
 
 
