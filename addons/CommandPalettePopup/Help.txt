@@ -15,11 +15,11 @@ These filters will match the search_string against the entire path (except for t
 [color=aqua]%s [/color] will list the methods of the current script with the line number. Activating the method will jump to that line in the script.
 
 Ending the search_string with  X (space + int), where X is an integer, will jump to the X-th item in the list.
-Ending the search_string with "  " (double space) while the filter for all files, settings or adding a setting is active, will autocomplete (part) of the path. When the "select a node" filter is active, it will select the node instead. Combine that with [color=aqua]%s [/color] to quickly edit properties with your keyboard.
+Ending the search_string with [color=aqua]"  "[/color] (double space) while the filter for all files, settings or adding a setting is active, will autocomplete (part) of the path. When the "select a node" filter is active, it will select the node instead. Combine that with [color=aqua]%s [/color] to quickly edit properties with your keyboard.
 
 Opening a script will switch to the scene tab the script is attached to. It only works, if the script is attached to the scene root. This will give you autocompletion on Node(Path)s and their methods.
 
-While the popup is visible, pressing the shortcut again will switch to the last open file. The two labels at the bottom show the current and the last file opened with this plugin. 
+While the popup is visible, pressing the shortcut again will switch to the last opened file. The two labels at the bottom show the current and the last file opened. 
 
 A copy button to quickly copy the file, node or settings path to the clipboard is available.
 

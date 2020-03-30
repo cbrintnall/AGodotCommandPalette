@@ -57,6 +57,7 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+secondary_color = Color( 1, 1, 1, 0.301961 )
 
 [node name="PaletteMarginContainer" type="MarginContainer" parent="."]
 anchor_right = 1.0
@@ -79,13 +80,13 @@ margin_right = 1004.0
 margin_bottom = 26.0
 
 [node name="MarginContainer" type="MarginContainer" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
-margin_right = 869.0
+margin_right = 766.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_constants/margin_right = 5
 
 [node name="Filter" type="LineEdit" parent="PaletteMarginContainer/VBoxContainer/SearchFilter/MarginContainer"]
-margin_right = 864.0
+margin_right = 761.0
 margin_bottom = 26.0
 rect_min_size = Vector2( 50, 0 )
 clear_button_enabled = true
@@ -95,16 +96,16 @@ caret_blink = true
 caret_blink_speed = 0.5
 
 [node name="CopyButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
-margin_left = 873.0
-margin_right = 963.0
+margin_left = 770.0
+margin_right = 860.0
 margin_bottom = 26.0
 hint_tooltip = "Copies the file path to the clipboard if a file is selected. If the selection is a code snippet, the function gets copied."
 text = "Copy Info"
 icon = SubResource( 2 )
 
 [node name="AddButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
-margin_left = 967.0
-margin_right = 1004.0
+margin_left = 864.0
+margin_right = 901.0
 margin_bottom = 26.0
 text = "Add"
 
@@ -175,7 +176,7 @@ margin_right = 1004.0
 margin_bottom = 41.0
 size_flags_horizontal = 3
 custom_styles/normal = SubResource( 9 )
-custom_colors/font_color = Color( 1, 1, 1, 0.3 )
+custom_colors/font_color = Color( 1, 1, 1, 0.301961 )
 text = "
 "
 valign = 3
