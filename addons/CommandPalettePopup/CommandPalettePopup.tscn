@@ -1,6 +1,7 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://addons/CommandPalettePopup/CommandPalettePopup.gd" type="Script" id=1]
+[ext_resource path="res://addons/CommandPalettePopup/CommandPaletteSettings.tscn" type="PackedScene" id=2]
 [ext_resource path="res://addons/CommandPalettePopup/SettingsAdder.tscn" type="PackedScene" id=3]
 
 [sub_resource type="Image" id=10]
@@ -57,7 +58,6 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-secondary_color = Color( 1, 1, 1, 0.301961 )
 
 [node name="PaletteMarginContainer" type="MarginContainer" parent="."]
 anchor_right = 1.0
@@ -80,13 +80,13 @@ margin_right = 1004.0
 margin_bottom = 26.0
 
 [node name="MarginContainer" type="MarginContainer" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
-margin_right = 766.0
+margin_right = 708.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_constants/margin_right = 5
 
 [node name="Filter" type="LineEdit" parent="PaletteMarginContainer/VBoxContainer/SearchFilter/MarginContainer"]
-margin_right = 761.0
+margin_right = 703.0
 margin_bottom = 26.0
 rect_min_size = Vector2( 50, 0 )
 clear_button_enabled = true
@@ -96,23 +96,48 @@ caret_blink = true
 caret_blink_speed = 0.5
 
 [node name="CopyButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
-margin_left = 770.0
-margin_right = 860.0
+margin_left = 712.0
+margin_right = 802.0
 margin_bottom = 26.0
 hint_tooltip = "Copies the file path to the clipboard if a file is selected. If the selection is a code snippet, the function gets copied."
 text = "Copy Info"
 icon = SubResource( 2 )
 
+[node name="ContextButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
+margin_left = 806.0
+margin_right = 885.0
+margin_bottom = 26.0
+text = "Context"
+icon = SubResource( 2 )
+
+[node name="SignalButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
+margin_left = 889.0
+margin_right = 963.0
+margin_bottom = 26.0
+text = "Signals"
+icon = SubResource( 2 )
+
+[node name="SignalPopupMenu" type="PopupMenu" parent="PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton"]
+margin_right = 20.0
+margin_bottom = 20.0
+
 [node name="AddButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
-margin_left = 864.0
-margin_right = 901.0
+margin_left = 967.0
+margin_right = 1004.0
 margin_bottom = 26.0
 text = "Add"
+
+[node name="SettingsButton" type="Button" parent="PaletteMarginContainer/VBoxContainer/SearchFilter"]
+visible = false
+margin_left = 902.0
+margin_right = 968.0
+margin_bottom = 26.0
+icon = SubResource( 2 )
 
 [node name="MarginContainer" type="MarginContainer" parent="PaletteMarginContainer/VBoxContainer"]
 margin_top = 30.0
 margin_right = 1004.0
-margin_bottom = 530.0
+margin_bottom = 547.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/margin_top = 10
@@ -124,17 +149,21 @@ __meta__ = {
 [node name="TabContainer" type="TabContainer" parent="PaletteMarginContainer/VBoxContainer/MarginContainer"]
 margin_top = 10.0
 margin_right = 1004.0
-margin_bottom = 495.0
+margin_bottom = 512.0
 custom_styles/tab_fg = SubResource( 3 )
 custom_styles/tab_disabled = SubResource( 4 )
 custom_styles/tab_bg = SubResource( 5 )
 custom_styles/panel = SubResource( 6 )
 tabs_visible = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="ItemList" type="ItemList" parent="PaletteMarginContainer/VBoxContainer/MarginContainer/TabContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 size_flags_horizontal = 3
+allow_rmb_select = true
 max_columns = 3
 __meta__ = {
 "_edit_use_anchors_": false
@@ -148,24 +177,22 @@ size_flags_horizontal = 3
 bbcode_enabled = true
 
 [node name="HSplitContainer" type="HBoxContainer" parent="PaletteMarginContainer/VBoxContainer"]
-margin_top = 534.0
+margin_top = 551.0
 margin_right = 1004.0
 margin_bottom = 575.0
 
 [node name="CurrentLabel" type="Label" parent="PaletteMarginContainer/VBoxContainer/HSplitContainer"]
 margin_right = 484.0
-margin_bottom = 41.0
+margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_styles/normal = SubResource( 9 )
-text = "
-"
 valign = 3
 clip_text = true
 
 [node name="SwitchIcon" type="ToolButton" parent="PaletteMarginContainer/VBoxContainer/HSplitContainer"]
 margin_left = 488.0
 margin_right = 516.0
-margin_bottom = 41.0
+margin_bottom = 24.0
 hint_tooltip = "Double tapping the keyboard shortcut will also switch between the two recent files."
 shortcut_in_tooltip = false
 icon = SubResource( 2 )
@@ -173,15 +200,25 @@ icon = SubResource( 2 )
 [node name="LastLabel" type="Label" parent="PaletteMarginContainer/VBoxContainer/HSplitContainer"]
 margin_left = 520.0
 margin_right = 1004.0
-margin_bottom = 41.0
+margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_styles/normal = SubResource( 9 )
-custom_colors/font_color = Color( 1, 1, 1, 0.301961 )
-text = "
-"
+custom_colors/font_color = Color( 1, 1, 1, 0.3 )
 valign = 3
 clip_text = true
 
 [node name="SettingsAdder" parent="." instance=ExtResource( 3 )]
+
+[node name="CommandPaletteSettings" parent="." instance=ExtResource( 2 )]
+[connection signal="popup_hide" from="." to="." method="_on_CommandPalettePopup_popup_hide"]
+[connection signal="text_changed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/MarginContainer/Filter" to="." method="_on_Filter_text_changed"]
+[connection signal="text_entered" from="PaletteMarginContainer/VBoxContainer/SearchFilter/MarginContainer/Filter" to="." method="_on_Filter_text_entered"]
+[connection signal="pressed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/CopyButton" to="." method="_on_CopyButton_pressed"]
+[connection signal="pressed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/ContextButton" to="." method="_on_ContextButton_pressed"]
+[connection signal="pressed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton" to="." method="_on_SignalButton_pressed"]
+[connection signal="focus_exited" from="PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton/SignalPopupMenu" to="." method="_on_SignalPopupMenu_focus_exited"]
+[connection signal="index_pressed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton/SignalPopupMenu" to="." method="_on_SignalPopupMenu_index_pressed"]
 [connection signal="pressed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/AddButton" to="." method="_on_AddButton_pressed"]
+[connection signal="pressed" from="PaletteMarginContainer/VBoxContainer/SearchFilter/SettingsButton" to="." method="_on_SettingsButton_pressed"]
+[connection signal="item_activated" from="PaletteMarginContainer/VBoxContainer/MarginContainer/TabContainer/ItemList" to="." method="_on_ItemList_item_activated"]
 [connection signal="pressed" from="PaletteMarginContainer/VBoxContainer/HSplitContainer/SwitchIcon" to="." method="_on_SwitchIcon_pressed"]

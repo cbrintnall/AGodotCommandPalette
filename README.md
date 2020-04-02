@@ -1,38 +1,32 @@
 # A Godot Command Palette
 
+**Changelog for 1.5.0**:
+
+- Open documentation pages are now included in the default list.
+- context menu for the "open scripts" filter (via a button on the right).
+- signal connection via a button using the "select a node" filter.
+- removed export vars and moved them to a dedicated settings page. Available: hide script panel on start, show docs in default list, keywords for filters, keyboard shortcut, popup size, adaptive popup size, show path for recent files
+
+
+- **See the built-in help page (type "?") on how to use the features.**
+
+
 **Features**:
 
-- **1.4.2** you can traverse the file tree by starting the search_string with "res:". Ending the search_string with "  " (double space) will autocomplete file/node/settings path.
-- **1.4.0:** Project/Editor settings can be changed. New Project settings can be added as well.
-- **1.4.0:** Starting the search_string with "n " will list all nodes in the current scene. Activating a node will select it in the scene tree dock. While the filter is active, you can add new scripts to any of the nodes.
-- **1.4.0:** List and select properties of nodes. Activating one will focus it in the inspector so you can edit it. 
-- **1.4.0:** The code snippets have been moved to their own plugin with a dedicated keyboard shortcut (and some small improvements). See https://github.com/Leleat/AGodotCodeSnippetPlugin
-- **1.4.0:** when using "a " non-scene/script files will be listed as well
-- **1.4.0:** it no longer matters how a file was opened when switching to the recent file
+- Open any file. Filter by type or name. 
+- Select any node in the current scene. Add a new script to a node.
+- Edit Inspector properties of the currently selected node.
+- Edit general Project/Editor settings. Add new Project settings.
+- Traverse the file tree with autocompletion on paths (list all files and folders in a given path).
+- Go to line.
+- Go to method.
+- Quickswitch to the last file opened.
 
+*Minor stuff*:
 
-- see the help page how to exactly use the features.
-
-
-
-- Pressing Ctrl+P (Command+P) opens a popup, which lists all open scripts.
-- Ending the search_string with \" X\", where X is an integer, jumps to the X-th line in the list.
-- Starting the search_string with \"a \" (a for all) will show ALL scripts and scenes. 
-- Starting the search_string with \"ac \" (c for code file) will show ALL SCRIPTS.
-- Starting the search_string with \"as \" (s for scene) will show ALL SCENES.
-- Starting the search-string with \"s \" will show all OPEN scenes.
-- The file filter supports wildcards. The beginning and the end of the search_string will automatically use the *.
-- Starting the search_string with \": \" followed by an integer will jump to that line in the script editor.
-- Starting the search_string with \":m \" will list the methods of the current script and enables you to jump to the selected method.
-- Pressing Ctrl+P (Command+P) while the popup is already open and no filter is applied will switch to the previously opened file (~~only works for files opened with this plugin)~~.
-
-- Opening a script also opens the scene, which the script is attached to. It only works if the script is attached to the scene root. This gives you autocompletion on the Node(Paths) and their methods.
-
-- A copy button is available to the right of the filter. This way you can quickly copy the file/node/settings path by tabbing from the filter box.
-
-- Custom shortcuts and keywords can be set via the inspector.
-
-(The filter applies to the actual file name for the open scens/scripts. For all files/scripts/scenes the filter matches the file path.)
+- A copy button is available to the right of the search LineEdit. This way you can quickly copy the file/node/settings/node property paths.
+- Opening a script also opens the scene, which the script is attached to. This gives you autocompletion on the Node(Paths) and their methods.
+- Ending the search_string with "  " (double space) will autocomplete file/node/settings path.
 
 
 **Installation**:

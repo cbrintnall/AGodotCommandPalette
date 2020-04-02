@@ -55,10 +55,6 @@ func _on_PathLineEdit_focus_exited() -> void:
 	prediction_list.hide()
 
 
-func _on_CancelButton_pressed() -> void:
-	hide()
-
-
 func _on_PathLineEdit_text_changed(new_text: String) -> void:
 	if new_text.ends_with("  ") and prediction_list.get_item_count() > 0:
 		var pos = max(new_text.find_last("/"), 0)

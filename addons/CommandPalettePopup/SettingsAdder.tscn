@@ -152,9 +152,9 @@ size_flags_horizontal = 3
 size_flags_vertical = 4
 
 [node name="ButtonsHB" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
-margin_left = 417.0
+margin_left = 457.0
 margin_top = 166.0
-margin_right = 546.0
+margin_right = 507.0
 margin_bottom = 186.0
 size_flags_horizontal = 6
 size_flags_vertical = 6
@@ -164,15 +164,8 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CancelButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsHB"]
-margin_right = 54.0
-margin_bottom = 20.0
-rect_min_size = Vector2( 50, 0 )
-text = "Cancel"
-
 [node name="SaveButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsHB"]
-margin_left = 79.0
-margin_right = 129.0
+margin_right = 50.0
 margin_bottom = 20.0
 rect_min_size = Vector2( 50, 0 )
 text = "Save"
@@ -206,5 +199,4 @@ __meta__ = {
 [connection signal="focus_exited" from="MarginContainer/VBoxContainer/PathHB/PathLineEdit" to="." method="_on_PathLineEdit_focus_exited"]
 [connection signal="text_changed" from="MarginContainer/VBoxContainer/PathHB/PathLineEdit" to="." method="_on_PathLineEdit_text_changed"]
 [connection signal="item_selected" from="MarginContainer/VBoxContainer/HintHintStringHB/OptionButton" to="." method="_on_HintButton_item_selected"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsHB/CancelButton" to="." method="_on_CancelButton_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsHB/SaveButton" to="." method="_on_SaveButton_pressed"]

@@ -3,40 +3,25 @@ extends WindowDialog
 
 
 onready var settings_adder : WindowDialog = $SettingsAdder
+onready var palette_settings : WindowDialog = $CommandPaletteSettings
 onready var filter = $PaletteMarginContainer/VBoxContainer/SearchFilter/MarginContainer/Filter
 onready var item_list = $PaletteMarginContainer/VBoxContainer/MarginContainer/TabContainer/ItemList
 onready var info_box = $PaletteMarginContainer/VBoxContainer/MarginContainer/TabContainer/RightInfoBox
 onready var tabs = $PaletteMarginContainer/VBoxContainer/MarginContainer/TabContainer
 enum TABS {ITEM_LIST, INFO_BOX}
 onready var copy_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/CopyButton
-onready var current_label = $PaletteMarginContainer/VBoxContainer/HSplitContainer/CurrentLabel # meta data "Path" saves file path
+onready var current_label = $PaletteMarginContainer/VBoxContainer/HSplitContainer/CurrentLabel # meta data "Path" saves file path, "Help" saves name of doc pages
 onready var last_label = $PaletteMarginContainer/VBoxContainer/HSplitContainer/LastLabel
 onready var add_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/AddButton
+onready var context_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/ContextButton
 onready var switch_button = $PaletteMarginContainer/VBoxContainer/HSplitContainer/SwitchIcon
-	
-# after making changes in the inspector, reopen the project to apply the changes
-export (String) var custom_keyboard_shortcut # go to "Editor > Editor Settings... > Shortcuts > Bindings" to see how a keyboard_shortcut looks as a String
-export (Vector2) var custom_popup_size
-export (String) var keyword_goto_line = ": " # go to line
-export (String) var keyword_goto_method = ":m " # go to method m
-export (String) var keyword_all_files = "a " # "a" for A(ll) files
-export (String) var keyword_all_scenes = "as " # "as" for A(ll) S(cenes)
-export (String) var keyword_all_scripts = "ac " # "ac" for A(ll) C(ode) files
-export (String) var keyword_all_open_scenes = "s " # "s " for all open S(cenes)
-export (String) var keyword_select_node = "n "
-export (String) var keyword_editor_settings = "sett "
-export (String) var keyword_set_inspector = "set "
-export (String) var keyword_folder_tree = "res:"
-export (Color) var secondary_color = Color(1, 1, 1, .3) # color for 3rd column in ItemList (file paths, additional_info...)
-export (bool) var adapt_popup_height = true
-export (bool) var show_full_path_in_recent_files = false
-	
-var screen_factor = max(OS.get_screen_dpi() / 100, 1)
-var keywords = [keyword_goto_line, keyword_goto_method, keyword_all_files, keyword_all_scenes, keyword_all_scripts, \
-		keyword_all_open_scenes, keyword_select_node, keyword_editor_settings, keyword_set_inspector]
-var keyboard_shortcut = "Command+P" if OS.get_name() == "OSX" else "Control+P"
-var max_popup_size = Vector2(clamp(1500 * screen_factor, 0, OS.get_screen_size().x * 0.75), \
-		clamp(OS.get_screen_size().y / 2 + 200 * screen_factor, 0, OS.get_screen_size().y * 0.75))
+onready var settings_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/SettingsButton
+onready var signal_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton
+onready var signal_popup = $PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton/SignalPopupMenu
+onready var keywords = [palette_settings.keyword_goto_line_LineEdit.text, palette_settings.keyword_goto_method_LineEdit.text, \
+		palette_settings.keyword_all_files_LineEdit.text, palette_settings.keyword_all_scenes_LineEdit.text, palette_settings.keyword_all_scripts_LineEdit.text, \
+		palette_settings.keyword_all_open_scenes_LineEdit.text, palette_settings.keyword_select_node_LineEdit.text, \
+		palette_settings.keyword_editor_settings_LineEdit.text, palette_settings.keyword_set_inspector_LineEdit.text]
 	
 var editor_settings : Dictionary # holds all editor settings [path] : {settings_dictionary}
 var project_settings : Dictionary # holds all project settings [path] : {settings_dictionary}
@@ -44,55 +29,75 @@ var scenes : Dictionary # holds all scenes; [file_path] = {icon}
 var scripts : Dictionary # holds all scripts; [file_path] = {icon, resource}
 var other_files : Dictionary # holds all other files; [file] = {icon}
 var folders : Dictionary # holds all folders [folder_path] = {folder count, file count, folder name, parent name}
-	
+var secondary_color : Color = Color(1, 1, 1, .3) # color for 3rd column in ItemList (file paths, additional_info...)
+var screen_factor = max(OS.get_screen_dpi() / 100, 1)
 var current_main_screen : String = ""
+var script_panel_visible : bool # only updated on context button press
+var script_added_to : Node # the node a script, which is created with this plugin, will be added to
 var files_are_updating : bool = false
 var recent_files_are_updating : bool  = false
 enum FILTER {ALL_FILES, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SELECT_NODE, SETTINGS, INSPECTOR, GOTO_LINE, GOTO_METHOD, HELP, TREE_FOLDER}
 var current_filter : int
-var script_added_to : Node # the node a script, which is created with this plugin, will be added to
 	
 var INTERFACE : EditorInterface
+var BASE_CONTROL_VBOX : VBoxContainer
 var EDITOR : ScriptEditor
 var FILE_SYSTEM : EditorFileSystem
 var SCRIPT_CREATE_DIALOG : ScriptCreateDialog
 var EDITOR_SETTINGS : EditorSettings
+var SCRIPT_PANEL : VSplitContainer
+var SCRIPT_LIST : ItemList
 
 
 func _ready() -> void:
-	connect("popup_hide", self, "_on_popup_hide")
-	filter.connect("text_changed", self, "_on_filter_text_changed")
-	filter.connect("text_entered", self, "_on_filter_text_entered")
-	item_list.connect("item_activated", self, "_on_item_list_activated")
-	copy_button.connect("pressed", self, "_on_copy_button_pressed")
-	
 	current_label.add_stylebox_override("normal", get_stylebox("normal", "LineEdit"))
 	last_label.add_stylebox_override("normal", get_stylebox("normal", "LineEdit"))
 	last_label.add_color_override("font_color", secondary_color)
+	last_label.text = ""
+	current_label.text = ""
 	filter.right_icon = get_icon("Search", "EditorIcons")
 	copy_button.icon = get_icon("ActionCopy", "EditorIcons")
 	switch_button.icon = get_icon("MirrorX", "EditorIcons")
-	
-	keyboard_shortcut = custom_keyboard_shortcut if custom_keyboard_shortcut else keyboard_shortcut
-	max_popup_size = custom_popup_size if custom_popup_size else max_popup_size
+	context_button.icon = get_icon("FileList", "EditorIcons")
+	settings_button.icon = get_icon("Tools", "EditorIcons")
+	signal_button.icon = get_icon("Signals", "EditorIcons")
 
 
 func _unhandled_key_input(event: InputEventKey) -> void:
-	if event.as_text() == keyboard_shortcut and event.pressed and visible and not filter.text and filter.has_focus():
+	if event.as_text() == palette_settings.keyboard_shortcut_LineEdit.text and event.pressed and visible and not filter.text and filter.has_focus():
 		_switch_to_recent_file()
 	
-	elif event.as_text() == keyboard_shortcut and event.pressed:
-		rect_size = max_popup_size
-		popup_centered()
+	elif event.as_text() == palette_settings.keyboard_shortcut_LineEdit.text and event.pressed:
 		_update_project_settings()
 		_update_popup_list(true)
 
 
-func _on_scene_changed(new_root : Node):
+func _switch_to_recent_file() -> void:
+		if last_label.has_meta("Path"):
+			if current_main_screen in ["2D", "3D", "Script"]:
+				_open_scene(last_label.get_meta("Path")) if scenes.has(last_label.get_meta("Path")) \
+						else _open_script(scripts[last_label.get_meta("Path")].ScriptResource)
+			else:
+				_open_scene(current_label.get_meta("Path")) if scenes.has(current_label.get_meta("Path")) \
+						else _open_script(scripts[current_label.get_meta("Path")].ScriptResource)
+		
+		elif last_label.has_meta("Help"):
+			INTERFACE.set_main_screen_editor("Script")
+			SCRIPT_LIST.select(last_label.get_meta("Help"), true)
+			SCRIPT_LIST.emit_signal("item_selected", last_label.get_meta("Help"))
+		
+		hide()
+
+
+func _on_scene_changed(new_root : Node) -> void:
 	_update_recent_files()
 
 
-func _on_editor_script_changed(new_script : Script):
+func _on_editor_script_changed(new_script : Script) -> void:
+	_update_recent_files()
+
+
+func _on_help_page_selected(selected_index : int):
 	_update_recent_files()
 
 
@@ -110,29 +115,6 @@ func _on_script_created(script : Script) -> void:
 		_open_script(script)
 
 
-func _update_recent_files():
-	# to prevent unnecessarily updating cause multiple signals call this method (for ex.: changing scripts changes scenes as well)
-	if not recent_files_are_updating and current_main_screen in ["2D", "3D", "Script"]:
-		recent_files_are_updating = true
-	
-		yield(get_tree().create_timer(.1), "timeout")
-		var path : String = ""
-		if current_main_screen == "Script" and EDITOR.get_current_script():
-			path = EDITOR.get_current_script().resource_path
-		elif current_main_screen in ["2D", "3D"] and INTERFACE.get_edited_scene_root():
-			path = INTERFACE.get_edited_scene_root().filename
-	
-		if current_label.has_meta("Path"):
-			last_label.text = current_label.text
-			last_label.set_meta("Path", current_label.get_meta("Path"))
-		else:
-			last_label.text = ""
-		current_label.text = path if show_full_path_in_recent_files else path.get_file()
-		current_label.set_meta("Path", path)
-	
-		recent_files_are_updating = false
-
-
 func _on_filesystem_changed() -> void:
 	# to prevent unnecessarily updating cause the signal gets fired multiple times
 	if not files_are_updating:
@@ -142,7 +124,11 @@ func _on_filesystem_changed() -> void:
 		files_are_updating = false
 
 
-func _on_copy_button_pressed() -> void:
+func _on_SwitchIcon_pressed() -> void:
+	_switch_to_recent_file()
+
+
+func _on_CopyButton_pressed() -> void:
 	var selection = item_list.get_selected_items()
 	if selection:
 		if current_filter == FILTER.SETTINGS:
@@ -169,7 +155,7 @@ func _on_copy_button_pressed() -> void:
 			OS.clipboard = item_list.get_item_text(selection[0])
 		
 		elif current_filter == FILTER.TREE_FOLDER:
-			var path : String = filter.text.substr(keyword_folder_tree.length())
+			var path : String = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length())
 			while path.begins_with("/"):
 				path.erase(0, 1)
 			if path.count("/") > 0:
@@ -182,16 +168,114 @@ func _on_copy_button_pressed() -> void:
 	hide()
 
 
-func _on_popup_hide() -> void:
+func _on_AddButton_pressed() -> void:
+	if filter.text.begins_with(palette_settings.keyword_editor_settings_LineEdit.text):
+		settings_adder._show()
+	
+	elif filter.text.begins_with(palette_settings.keyword_select_node_LineEdit.text):
+		var selection = item_list.get_selected_items()
+		if selection:
+			var selected_index = selection[0]
+			var selected_name = item_list.get_item_text(selected_index).strip_edges()
+			var node_path = item_list.get_item_text(selected_index - 1) + selected_name if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
+			script_added_to = INTERFACE.get_edited_scene_root().get_node(node_path)
+			var file_path = INTERFACE.get_edited_scene_root().filename.get_base_dir()
+			hide()
+			SCRIPT_CREATE_DIALOG.config(script_added_to.get_class(), (file_path if file_path else "res:/") + "/" + selected_name + ".gd")
+			SCRIPT_CREATE_DIALOG.popup_centered()
+
+
+func _on_SettingsButton_pressed() -> void:
+	palette_settings.popup_centered()
+
+
+func _on_ContextButton_pressed() -> void:
+	var selection = item_list.get_selected_items()
+	if selection and current_filter == FILTER.ALL_OPEN_SCRIPTS:
+		if current_main_screen != "Script":
+			INTERFACE.set_main_screen_editor("Script")
+			yield(get_tree(), "idle_frame")
+		
+		script_panel_visible = SCRIPT_PANEL.visible
+		if not script_panel_visible:
+			SCRIPT_PANEL.show()
+		yield(get_tree().create_timer(.01), "timeout")
+		var selected_name = item_list.get_item_text(selection[0])
+		var simul_rmb = InputEventMouseButton.new()
+		simul_rmb.button_index = BUTTON_RIGHT
+		simul_rmb.pressed = true
+		var pos = Vector2(15, 5)
+		while selected_name != SCRIPT_LIST.get_item_text(SCRIPT_LIST.get_item_at_position(pos)):
+			pos.y += 5
+			if pos.y > OS.get_screen_size().y:
+				push_warning("Command Palette Plugin: Error getting context menu from script list.")
+				return
+		pos.y += 5
+		simul_rmb.position = SCRIPT_LIST.rect_global_position + pos
+		Input.parse_input_event(simul_rmb)
+		for child in EDITOR.get_children():
+			if child is PopupMenu:
+				child.allow_search = true
+				child.call_deferred("set_position", Vector2(SCRIPT_LIST.rect_global_position.x + SCRIPT_LIST.rect_size.x + pos.x, \
+						SCRIPT_LIST.rect_global_position.y + pos.y))
+				if not child.is_connected("popup_hide", self, "_on_script_context_menu_hide"):
+					child.connect("popup_hide", self, "_on_script_context_menu_hide")
+
+
+func _on_SignalButton_pressed() -> void:
+	var selected_index = item_list.get_selected_items()[0]
+	var selected_name = item_list.get_item_text(selected_index)
+	var path : String = item_list.get_item_text(selected_index - 1) + selected_name if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
+	var node = get_node(path)
+	signal_popup.clear()
+	signal_popup.rect_size = Vector2(1, 1) # to adapt the height
+	for signals in node.get_signal_list():
+		signal_popup.add_item(signals.name)
+	signal_popup.popup()
+	signal_popup.rect_global_position = signal_button.rect_global_position
+
+
+func _on_SignalPopupMenu_index_pressed(index : int) -> void:
+	var selected_name = signal_popup.get_item_text(index) + "()"
+	var node_dock = _get_dock("NodeDock")
+	var connection_dock_tree = node_dock.get_child(1).get_child(0)
+	var selection = INTERFACE.get_selection()
+	selection.clear()
+	var selected_index = item_list.get_selected_items()[0]
+	var node_path = item_list.get_item_text(selected_index - 1) + item_list.get_item_text(selected_index) if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
+	selection.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
+	yield(get_tree().create_timer(.01), "timeout")
+	_get_node_dock_tree_item(connection_dock_tree.get_root(), selected_name, connection_dock_tree)
+
+
+func _get_node_dock_tree_item(root : TreeItem, signal_name : String, connection_dock_tree : Tree) -> void:
+	if root and root.get_text(0) == signal_name:
+		hide()
+		root.select(0)
+		connection_dock_tree.emit_signal("item_activated")
+	else:
+		root = root.get_children()
+		while root:
+			_get_node_dock_tree_item(root, signal_name, connection_dock_tree)
+			root = root.get_next()
+
+
+func _on_SignalPopupMenu_focus_exited() -> void:
+	signal_popup.hide()
+	filter.call_deferred("grab_focus")
+
+
+func _on_script_context_menu_hide() -> void:
+	if not script_panel_visible:
+		SCRIPT_PANEL.hide()
+
+
+func _on_CommandPalettePopup_popup_hide() -> void:
 	filter.clear()
 
 
-func _on_item_list_activated(index : int) -> void:
-	_activate_item(index)
-
-
-func _on_filter_text_changed(new_txt : String) -> void:
-	# autocompletion on paths; double spaces because one space for jumping in item_list
+func _on_Filter_text_changed(new_txt : String) -> void:
+	# autocompletion; double spaces because one space for jumping in item_list
 	if filter.text.ends_with("  "):
 		var selection = item_list.get_selected_items()
 		if selection:
@@ -203,9 +287,10 @@ func _on_filter_text_changed(new_txt : String) -> void:
 						break
 				var search_string = filter.text.substr(key.length()).strip_edges()
 				var path_to_autocomplete : String = ""
-				if key in [keyword_all_files, keyword_all_scenes, keyword_all_scripts]:
+				if key in [palette_settings.keyword_all_files_LineEdit.text, palette_settings.keyword_all_scenes_LineEdit.text, \
+						palette_settings.keyword_all_scripts_LineEdit.text]:
 					path_to_autocomplete = item_list.get_item_text(selection[0] - 1)
-				elif key in [keyword_editor_settings]:
+				elif key in [palette_settings.keyword_editor_settings_LineEdit.text]:
 					path_to_autocomplete = item_list.get_item_text(selection[0])
 				var start_pos = max(path_to_autocomplete.findn(search_string), 0)
 				var end_pos = path_to_autocomplete.find("/", start_pos + search_string.length()) + 1
@@ -224,26 +309,30 @@ func _on_filter_text_changed(new_txt : String) -> void:
 				filter.grab_focus()
 			
 			elif current_filter == FILTER.TREE_FOLDER:
-				var path = filter.text.substr(keyword_folder_tree.length()).strip_edges().rsplit("/", true, 1)[0] + "/" if filter.text.count("/") > 0 else "//"
-				filter.text = keyword_folder_tree + path + item_list.get_item_text(selection[0])
+				var path = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length()).strip_edges().rsplit("/", true, 1)[0] \
+						+ "/" if filter.text.count("/") > 0 else "//"
+				filter.text = palette_settings.keyword_folder_tree_LineEdit.text + path + item_list.get_item_text(selection[0])
 				filter.text += "/" if item_list.get_item_icon(selection[0]) else ""
 				filter.caret_position = filter.text.length()
 	
-	rect_size = max_popup_size
 	_update_popup_list()
 
 
-func _on_filter_text_entered(new_txt : String) -> void:
+func _on_Filter_text_entered(new_txt : String) -> void:
 	var selection = item_list.get_selected_items()
 	if selection:
 		_activate_item(selection[0])
 	else:
-		_activate_item()
+		_activate_item(-1)
+
+
+func _on_ItemList_item_activated(index: int) -> void:
+	_activate_item(index)
 
 
 func _activate_item(selected_index : int = -1) -> void:
 	if current_filter == FILTER.GOTO_LINE:
-		var number = filter.text.substr(keyword_goto_line.length()).strip_edges()
+		var number = filter.text.substr(palette_settings.keyword_goto_line_LineEdit.text.length()).strip_edges()
 		if number.is_valid_integer():
 			var max_lines = EDITOR.get_current_script().source_code.count("\n")
 			EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
@@ -268,7 +357,14 @@ func _activate_item(selected_index : int = -1) -> void:
 		else:
 			path = item_list.get_item_text(selected_index - 1) + ("/" if item_list.get_item_text(selected_index - 1) != "res://" else "") \
 					+ item_list.get_item_text(selected_index).strip_edges()
-		_open_selection(path)
+		
+		if current_filter == FILTER.ALL_OPEN_SCRIPTS and item_list.get_item_metadata(selected_index):
+			# open docs
+			INTERFACE.set_main_screen_editor("Script")
+			EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).select(item_list.get_item_metadata(selected_index), true)
+			EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).emit_signal("item_selected", item_list.get_item_metadata(selected_index))
+		else:
+			_open_selection(path)
 	
 	elif current_filter == FILTER.SETTINGS:
 		var setting_path = Array(selected_name.split("/"))
@@ -301,7 +397,7 @@ func _activate_item(selected_index : int = -1) -> void:
 		selection.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
 	
 	elif current_filter == FILTER.TREE_FOLDER:
-		var path : String = filter.text.substr(keyword_folder_tree.length())
+		var path : String = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length())
 		while path.begins_with("/"):
 			path.erase(0, 1)
 		path = "res://" + (path.rsplit("/", true, 1)[0] + "/" + selected_name if path.count("/") > 0 else selected_name)
@@ -317,10 +413,10 @@ func _activate_item(selected_index : int = -1) -> void:
 
 
 func _open_settings(setting_path : Array, setting_name : String, editor : bool = true) -> void:
-	var popup : PopupMenu = INTERFACE.get_base_control().get_child(1).get_child(0).get_child(0).get_child(3 if editor else 1).get_child(0)
+	var popup : PopupMenu = BASE_CONTROL_VBOX.get_child(0).get_child(0).get_child(3 if editor else 1).get_child(0)
 	yield(get_tree(), "idle_frame") # otherwise windows don't get dimmed
-	popup.emit_signal("id_pressed", 59 if editor else 43) # settings get pushed to the last pos, if it's opened
-	
+	popup.emit_signal("id_pressed", 59 if editor else 43)
+	# settings get pushed to the last pos, if it's opened
 	var SETTINGS_DIALOG = INTERFACE.get_base_control().get_child(INTERFACE.get_base_control().get_child_count() - 1) 
 	var SETTINGS_TREE : Tree = SETTINGS_DIALOG.get_child(3).get_child(0).get_child(1).get_child(0).get_child(0)
 	var SETTINGS_INSPECTOR = SETTINGS_DIALOG.get_child(3).get_child(0).get_child(1).get_child(1).get_child(0)
@@ -391,54 +487,20 @@ func _open_other_file(path : String) -> void:
 	INTERFACE.edit_resource(load(path))
 
 
-func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool = false) -> void:
-	if reset:
-		scenes.clear()
-		scripts.clear()
-		other_files.clear()
-		folders.clear()
-	
-	var script_icon = get_icon("Script", "EditorIcons")
-	for file in folder.get_file_count():
-		var file_path = folder.get_file_path(file)
-		var file_type = FILE_SYSTEM.get_file_type(file_path)
-		
-		if file_type.find("Script") != -1:
-			scripts[file_path] = {"Icon" : script_icon, "ScriptResource" : load(file_path)}
-		
-		elif file_type.find("Scene") != -1:
-			scenes[file_path] = {"Icon" : null}
-			
-			var scene = load(file_path).instance()
-			scenes[file_path].Icon = get_icon(scene.get_class(), "EditorIcons")
-			var attached_script = scene.get_script()
-			if attached_script:
-				attached_script.set_meta("Scene_Path", file_path)
-			scene.free()
-		
-		else:
-			other_files[file_path] = {"Icon" : get_icon(file_type, "EditorIcons")}
-	
-	for subdir in folder.get_subdir_count():
-		folders[folder.get_subdir(subdir).get_path()] = {"Subdir_Count" : folder.get_subdir(subdir).get_subdir_count(), "File_Count" : folder.get_subdir(subdir).get_file_count(), \
-				"Folder_Name" : folder.get_subdir(subdir).get_name(), "Parent_Path" : (folder.get_subdir(subdir).get_parent().get_path())}
-		_update_files_dictionary(folder.get_subdir(subdir))
-
-
 func _update_popup_list(just_popupped : bool = false) -> void:
 	if just_popupped:
+		rect_size = Vector2(palette_settings.width_LineEdit.text as float, palette_settings.max_height_LineEdit.text as float)
+		popup_centered()
 		filter.grab_focus()
 		script_added_to = null
 	
 	item_list.clear()
-	copy_button.visible = false
-	add_button.visible = false
 	var search_string : String = filter.text
 	
 	# typing " X" at the end of the search_string jumps to the X-th item in the list
 	var quickselect_line = 0
 	var qs_starts_at = search_string.strip_edges().find_last(" ") if not search_string.begins_with(" ") else search_string.find_last(" ")
-	if qs_starts_at != -1 and not search_string.begins_with(keyword_goto_line):
+	if qs_starts_at != -1 and not search_string.begins_with(palette_settings.keyword_goto_line_LineEdit.text):
 		quickselect_line = search_string.substr(qs_starts_at)
 		if quickselect_line.strip_edges().is_valid_integer():
 			search_string.erase(qs_starts_at + 1, search_string.length())
@@ -449,19 +511,21 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		current_filter = FILTER.HELP
 		tabs.current_tab = TABS.INFO_BOX
 		_build_help_page()
+		_setup_buttons()
+		
 		return
 	
 	tabs.current_tab = TABS.ITEM_LIST
 	
 	# go to line
-	if search_string.begins_with(keyword_goto_line):
+	if search_string.begins_with(palette_settings.keyword_goto_line_LineEdit.text):
 		current_filter = FILTER.GOTO_LINE
 		if not current_main_screen == "Script":
 			item_list.add_item("Go to \"Script\" view to goto_line.", null, false)
 			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
 		else:
 			var max_lines = EDITOR.get_current_script().source_code.count("\n")
-			var number = search_string.substr(keyword_goto_line.length()).strip_edges()
+			var number = search_string.substr(palette_settings.keyword_goto_line_LineEdit.text.length()).strip_edges()
 			item_list.add_item("Enter a number between 1 and %s." % (max_lines + 1))
 			if number.is_valid_integer():
 				item_list.set_item_text(item_list.get_item_count() - 1, "Go to line %s of %s." % [clamp(number as int, 1, max_lines + 1), max_lines + 1])
@@ -469,63 +533,55 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 					EDITOR.goto_line(clamp(number as int - 1, 0, max_lines))
 	
 	# select node
-	elif search_string.begins_with(keyword_select_node):
-		add_button.visible = true
-		add_button.icon = get_icon("ScriptCreate", "EditorIcons")
-		copy_button.text = "Copy Node Path"
-		copy_button.visible = true
+	elif search_string.begins_with(palette_settings.keyword_select_node_LineEdit.text):
 		current_filter = FILTER.SELECT_NODE
-		_build_node_list(INTERFACE.get_edited_scene_root(), search_string.substr(keyword_select_node.length()).strip_edges())
+		_build_node_list(INTERFACE.get_edited_scene_root(), search_string.substr(palette_settings.keyword_select_node_LineEdit.text.length()).strip_edges())
 		_count_node_list()
 
 	# edit editor settings
-	elif search_string.begins_with(keyword_editor_settings):
-		add_button.visible = true
-		add_button.icon = get_icon("MultiEdit", "EditorIcons")
+	elif search_string.begins_with(palette_settings.keyword_editor_settings_LineEdit.text):
 		current_filter = FILTER.SETTINGS
-		_build_item_list(search_string.substr(keyword_editor_settings.length()))
+		_build_item_list(search_string.substr(palette_settings.keyword_editor_settings_LineEdit.text.length()))
 	
 	# edit inspector settings
-	elif search_string.begins_with(keyword_set_inspector):
+	elif search_string.begins_with(palette_settings.keyword_set_inspector_LineEdit.text):
 		current_filter = FILTER.INSPECTOR
-		_build_item_list(search_string.substr(keyword_set_inspector.length()))
+		_build_item_list(search_string.substr(palette_settings.keyword_set_inspector_LineEdit.text.length()))
 	
 	# folder tree view
-	elif search_string.begins_with(keyword_folder_tree):
-		copy_button.text = "Copy File Path"
-		copy_button.visible = true
+	elif search_string.begins_with(palette_settings.keyword_folder_tree_LineEdit.text):
 		current_filter = FILTER.TREE_FOLDER
-		_build_folder_view(search_string.substr(keyword_set_inspector.length()))
+		_build_folder_view(search_string.substr(palette_settings.keyword_set_inspector_LineEdit.text.length()))
 	
 	# methods of the current script
-	elif search_string.begins_with(keyword_goto_method):
+	elif search_string.begins_with(palette_settings.keyword_goto_method_LineEdit.text):
 		current_filter = FILTER.GOTO_METHOD
 		if not current_main_screen == "Script":
 			item_list.add_item("Go to \"Script\" view to goto_method.", null, false)
 			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
 		else:
 			current_filter = FILTER.GOTO_METHOD
-			_build_item_list(search_string.substr(keyword_goto_method.length()))
+			_build_item_list(search_string.substr(palette_settings.keyword_goto_method_LineEdit.text.length()))
 	
 	# show all scripts and scenes
-	elif search_string.begins_with(keyword_all_files):
+	elif search_string.begins_with(palette_settings.keyword_all_files_LineEdit.text):
 		current_filter = FILTER.ALL_FILES
-		_build_item_list(search_string.substr(keyword_all_files.length()))
+		_build_item_list(search_string.substr(palette_settings.keyword_all_files_LineEdit.text.length()))
 	
 	# show all scripts
-	elif search_string.begins_with(keyword_all_scripts):
+	elif search_string.begins_with(palette_settings.keyword_all_scripts_LineEdit.text):
 		current_filter = FILTER.ALL_SCRIPTS
-		_build_item_list(search_string.substr(keyword_all_scripts.length()))
+		_build_item_list(search_string.substr(palette_settings.keyword_all_scripts_LineEdit.text.length()))
 	
 	# show all scenes
-	elif search_string.begins_with(keyword_all_scenes):
+	elif search_string.begins_with(palette_settings.keyword_all_scenes_LineEdit.text):
 		current_filter = FILTER.ALL_SCENES
-		_build_item_list(search_string.substr(keyword_all_scenes.length()))
+		_build_item_list(search_string.substr(palette_settings.keyword_all_scenes_LineEdit.text.length()))
 	
 	# show open scenes
-	elif search_string.begins_with(keyword_all_open_scenes):
+	elif search_string.begins_with(palette_settings.keyword_all_open_scenes_LineEdit.text):
 		current_filter = FILTER.ALL_OPEN_SCENES
-		_build_item_list(search_string.substr(keyword_all_open_scenes.length()))
+		_build_item_list(search_string.substr(palette_settings.keyword_all_open_scenes_LineEdit.text.length()))
 	
 	# show all open scripts
 	else:
@@ -533,80 +589,106 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		_build_item_list(search_string)
 	
 	quickselect_line = clamp(quickselect_line as int, 0, item_list.get_item_count() / item_list.max_columns - 1)
-	if item_list.get_item_count() > 0 and item_list.get_item_count() >= item_list.max_columns:
-		copy_button.disabled = false
-		add_button.disabled = false
+	if item_list.get_item_count() >= item_list.max_columns:
 		item_list.select(quickselect_line * item_list.max_columns + (1 if current_filter in [FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS, \
 				FILTER.GOTO_METHOD, FILTER.TREE_FOLDER] else 2))
 		item_list.ensure_current_is_visible()
-	else:
-		copy_button.disabled = true
-		add_button.disabled = true
-	
 	_adapt_list_height()
+	_setup_buttons()
+
+
+func _build_help_page() -> void:
+	rect_size = Vector2(palette_settings.width_LineEdit.text as float, palette_settings.max_height_LineEdit.text as float)
+	var file = File.new()
+	file.open("res://addons/CommandPalettePopup/Help.txt", File.READ)
+	info_box.bbcode_text = file.get_as_text() % [palette_settings.keyword_all_open_scenes_LineEdit.text, palette_settings.keyword_all_files_LineEdit.text, \
+			palette_settings.keyword_all_scenes_LineEdit.text, 	palette_settings.keyword_all_scripts_LineEdit.text,palette_settings.keyword_select_node_LineEdit.text, \
+			palette_settings.keyword_editor_settings_LineEdit.text,palette_settings.keyword_set_inspector_LineEdit.text, \
+			palette_settings.keyword_folder_tree_LineEdit.text, palette_settings.keyword_goto_line_LineEdit.text, palette_settings.keyword_goto_method_LineEdit.text, \
+			palette_settings.keyword_set_inspector_LineEdit.text]
+	file.close()
 
 
 func _build_item_list(search_string : String) -> void:
-	copy_button.visible = true
-	copy_button.text = "Copy File Path"
 	search_string = search_string.strip_edges().replace(" ", "*")
-	var list : Array # array of file paths
+	var name_matched_list : Array # FILE NAME matched search_string; this gets listed first
+	var path_matched_list : Array # otherwise we put the file paths here
 	match current_filter:
 		FILTER.ALL_FILES:
 			for path in scenes:
-				if search_string and not path.matchn("*" + search_string + "*"):
+				if search_string and not path.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 			
 			for path in scripts:
-				if search_string and not path.matchn("*" + search_string + "*"):
+				if search_string and not path.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 			
 			for path in other_files:
-				if search_string and not path.matchn("*" + search_string + "*"):
+				if search_string and not path.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 		
 		FILTER.ALL_SCRIPTS:
 			for path in scripts:
-				if search_string and not path.matchn("*" + search_string + "*"):
+				if search_string and not path.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 		
 		FILTER.ALL_SCENES:
 			for path in scenes:
-				if search_string and not path.matchn("*" + search_string + "*"):
+				if search_string and not path.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 		
 		FILTER.ALL_OPEN_SCENES:
 			var open_scenes = INTERFACE.get_open_scenes()
 			for path in open_scenes:
-				if search_string and not path.get_file().matchn("*" + search_string + "*"):
+				if search_string and not path.get_file().matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path.get_file()):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 		
 		FILTER.ALL_OPEN_SCRIPTS:
 			var open_scripts = EDITOR.get_open_scripts()
 			for script in open_scripts:
 				var path = script.resource_path
-				if search_string and not path.get_file().matchn("*" + search_string + "*"):
+				if search_string and not path.get_file().matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(path.get_file()):
 					continue
-				list.push_back(path)
+				if search_string and search_string.is_subsequence_ofi(path.get_file()):
+					name_matched_list.push_back(path)
+				else:
+					path_matched_list.push_back(path)
 		
 		FILTER.GOTO_METHOD:
-			copy_button.visible = false
 			var current_script = EDITOR.get_current_script()
 			var method_dict : Dictionary # maps methods to their line position
 			for method in current_script.get_script_method_list():
 				if method.name != "_init": # _init always appears
-					if search_string and not method.name.matchn("*" + search_string + "*"):
+					if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
 						continue
 					var pos = current_script.source_code.find("func " + method.name)
 					var line = current_script.source_code.count("\n", 0, pos)
 					method_dict[line] = method.name
-			var lines = method_dict.keys() # get_script_method_list() doesnt give the list in order of appearance in the script
+			var lines = method_dict.keys() # get_script_method_list() doesnt give the path_matched_list in order of appearance in the script
 			lines.sort()
 			
 			var counter = 0
@@ -619,71 +701,113 @@ func _build_item_list(search_string : String) -> void:
 			return
 		
 		FILTER.SETTINGS:
-			copy_button.text = "Copy Settings Path"
 			for setting in editor_settings:
-				if search_string and not setting.matchn("*" + search_string + "*"):
+				if search_string and not setting.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(setting):
 					continue
-				list.push_back(setting)
+				path_matched_list.push_back(setting)
 			
 			for setting in project_settings:
-				if search_string and not setting.matchn("*" + search_string + "*"):
+				if search_string and not setting.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(setting):
 					continue
-				list.push_back(setting)
+				path_matched_list.push_back(setting)
 		
 		FILTER.INSPECTOR:
-			copy_button.text = "Copy Property Path"
 			if INTERFACE.get_selection().get_selected_nodes():
 				var node = INTERFACE.get_selection().get_selected_nodes()[0]  
 				for property in node.get_property_list():
 					if property.name and property.usage & PROPERTY_USAGE_EDITOR:
-						if search_string and not property.name.matchn("*" + search_string + "*"):
+						if search_string and not property.name.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(property.name):
 							continue
-						list.push_back(property.name)
+						path_matched_list.push_back(property.name)
 			else:
 				item_list.add_item("No node selected.")
 				item_list.set_item_disabled(item_list.get_item_count() - 1, true)
 				return
 	
-	_quick_sort_by_file_name(list, 0, list.size() - 1) if _current_filter_displays_files() else list.sort()
-	for index in list.size():
+	if _current_filter_displays_files():
+		_quick_sort_by_file_name(name_matched_list, 0, name_matched_list.size() - 1) 
+		_quick_sort_by_file_name(path_matched_list, 0, path_matched_list.size() - 1) 
+	else:
+		path_matched_list.sort()
+	
+	var index = 0
+	for idx in name_matched_list.size():
+		item_list.add_item(" " + String(index) + "  :: ", null, false)
+		if current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS]:
+			item_list.add_item(name_matched_list[idx].get_base_dir())
+			item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+			item_list.add_item(name_matched_list[idx].get_file())
+			if scenes.has(name_matched_list[idx]):
+				item_list.set_item_icon(item_list.get_item_count() - 1, scenes[name_matched_list[idx]].Icon)
+			elif scripts.has(name_matched_list[idx]):
+				item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[name_matched_list[idx]].Icon)
+			elif other_files.has(name_matched_list[idx]):
+				item_list.set_item_icon(item_list.get_item_count() - 1, other_files[name_matched_list[idx]].Icon)
+		else:
+			item_list.add_item(name_matched_list[idx].get_file())
+			if scenes.has(name_matched_list[idx]):
+				item_list.set_item_icon(item_list.get_item_count() - 1, scenes[name_matched_list[idx]].Icon)
+			elif scripts.has(name_matched_list[idx]):
+				item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[name_matched_list[idx]].Icon)
+			elif other_files.has(name_matched_list[idx]):
+				item_list.set_item_icon(item_list.get_item_count() - 1, other_files[name_matched_list[idx]].Icon)
+			item_list.add_item(name_matched_list[idx].get_base_dir())
+			item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+		index += 1
+	
+	for idx in path_matched_list.size():
 		item_list.add_item(" " + String(index) + "  :: ", null, false)
 		
 		if current_filter == FILTER.SETTINGS:
-			item_list.add_item("Editor :: " if editor_settings.has(list[index]) else "Project :: ", null, false)
+			item_list.add_item("Editor :: " if editor_settings.has(path_matched_list[idx]) else "Project :: ", null, false)
 			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
-			item_list.add_item(list[index])
+			item_list.add_item(path_matched_list[idx])
 		
 		elif current_filter == FILTER.INSPECTOR:
 			item_list.add_item(INTERFACE.get_selection().get_selected_nodes()[0].name  + " :: ")
 			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
-			item_list.add_item(list[index])
+			item_list.add_item(path_matched_list[idx])
 		
 		elif _current_filter_displays_files():
 			if current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS]:
-				item_list.add_item(list[index].get_base_dir())
+				item_list.add_item(path_matched_list[idx].get_base_dir())
 				item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
-				item_list.add_item(list[index].get_file())
-				if scenes.has(list[index]):
-					item_list.set_item_icon(item_list.get_item_count() - 1, scenes[list[index]].Icon)
-				elif scripts.has(list[index]):
-					item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[list[index]].Icon)
-				elif other_files.has(list[index]):
-					item_list.set_item_icon(item_list.get_item_count() - 1, other_files[list[index]].Icon)
+				item_list.add_item(path_matched_list[idx].get_file())
+				if scenes.has(path_matched_list[idx]):
+					item_list.set_item_icon(item_list.get_item_count() - 1, scenes[path_matched_list[idx]].Icon)
+				elif scripts.has(path_matched_list[idx]):
+					item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[path_matched_list[idx]].Icon)
+				elif other_files.has(path_matched_list[idx]):
+					item_list.set_item_icon(item_list.get_item_count() - 1, other_files[path_matched_list[idx]].Icon)
 			else:
-				item_list.add_item(list[index].get_file())
-				if scenes.has(list[index]):
-					item_list.set_item_icon(item_list.get_item_count() - 1, scenes[list[index]].Icon)
-				elif scripts.has(list[index]):
-					item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[list[index]].Icon)
-				elif other_files.has(list[index]):
-					item_list.set_item_icon(item_list.get_item_count() - 1, other_files[list[index]].Icon)
-				item_list.add_item(list[index].get_base_dir())
+				item_list.add_item(path_matched_list[idx].get_file())
+				if scenes.has(path_matched_list[idx]):
+					item_list.set_item_icon(item_list.get_item_count() - 1, scenes[path_matched_list[idx]].Icon)
+				elif scripts.has(path_matched_list[idx]):
+					item_list.set_item_icon(item_list.get_item_count() - 1,  scripts[path_matched_list[idx]].Icon)
+				elif other_files.has(path_matched_list[idx]):
+					item_list.set_item_icon(item_list.get_item_count() - 1, other_files[path_matched_list[idx]].Icon)
+				item_list.add_item(path_matched_list[idx].get_base_dir())
 				item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+		
+		index += 1
+	
+	if palette_settings.include_help_pages_button.pressed and current_filter == FILTER.ALL_OPEN_SCRIPTS:
+		for script_index in EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).get_item_count() - EDITOR.get_open_scripts().size():
+			if EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).get_item_text(script_index + EDITOR.get_open_scripts().size()).\
+					matchn("*" + search_string + "*") or search_string.is_subsequence_ofi(EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).\
+					get_item_text(script_index + EDITOR.get_open_scripts().size())):
+				item_list.add_item(" " + String(index) + "  :: ", null, false)
+				item_list.add_item(EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).get_item_text(script_index \
+						+ EDITOR.get_open_scripts().size()), get_icon("Help", "EditorIcons"))
+				item_list.set_item_metadata(item_list.get_item_count() - 1, script_index + EDITOR.get_open_scripts().size())
+				item_list.add_item("")
+				index += 1
 
 
 # select a node
 func _build_node_list(root : Node, search_string : String) -> void:
-	if not search_string or root.name.matchn("*" + search_string.strip_edges().replace(" ", "*") + "*"):
+	if not search_string or root.name.matchn("*" + search_string.strip_edges().replace(" ", "*") + "*") or search_string.is_subsequence_ofi(root.name):
 		item_list.add_item("", null, false)
 		
 		if root == INTERFACE.get_edited_scene_root():
@@ -697,7 +821,8 @@ func _build_node_list(root : Node, search_string : String) -> void:
 		item_list.add_item(root.name)
 	
 	for child in root.get_children():
-		_build_node_list(child, search_string)
+		if child.owner == INTERFACE.get_edited_scene_root(): # otherwise also "subnodes" not created by the user (like timer/popup)
+			_build_node_list(child, search_string)
 
 
 # select a node
@@ -715,11 +840,13 @@ func _build_folder_view(search_string : String) -> void:
 	var counter = 0
 	for folder_path in folders:
 		var fname = search_string.substr(search_string.get_base_dir().length() + (1 if search_string.count("/") > 0 else 0))
-		if ("res://" + search_string.get_base_dir() + ("/" if search_string.count("/") != 0 else "")).to_lower() == folders[folder_path].Parent_Path.to_lower() and folders[folder_path].Folder_Name.matchn(fname + "*"):
+		if ("res://" + search_string.get_base_dir() + ("/" if search_string.count("/") != 0 else "")).to_lower() == folders[folder_path].Parent_Path.to_lower() \
+				and folders[folder_path].Folder_Name.matchn(fname + "*"):
 			item_list.add_item(" " + String(counter) + "  :: ", null, false)
 			item_list.add_item(folders[folder_path].Folder_Name, get_icon("Folder", "EditorIcons"))
 			if folders[folder_path].Subdir_Count:
-				item_list.add_item(" Subdirs: " + String(folders[folder_path].Subdir_Count) + (" + Files: %s" % folders[folder_path].File_Count if folders[folder_path].File_Count else ""), null, false)
+				item_list.add_item(" Subdirs: " + String(folders[folder_path].Subdir_Count) + \
+						(" + Files: %s" % folders[folder_path].File_Count if folders[folder_path].File_Count else ""), null, false)
 			else:
 				item_list.add_item((" Files: %s" % folders[folder_path].File_Count) if folders[folder_path].File_Count else "", null, false)
 			item_list.set_item_disabled(item_list.get_item_count() - 1, true)
@@ -748,16 +875,8 @@ func _build_folder_view(search_string : String) -> void:
 		counter += 1
 
 
-func _build_help_page() -> void:
-	var file = File.new()
-	file.open("res://addons/CommandPalettePopup/Help.txt", File.READ)
-	info_box.bbcode_text = file.get_as_text() % [keyword_all_open_scenes, keyword_all_files, keyword_all_scenes, keyword_all_scripts, \
-			keyword_select_node, keyword_editor_settings,keyword_set_inspector, keyword_folder_tree, keyword_goto_line, keyword_goto_method, keyword_set_inspector]
-	file.close()
-
-
 func _adapt_list_height() -> void:
-	if adapt_popup_height:
+	if palette_settings.adaptive_height_button.pressed:
 		var script_icon = get_icon("Script", "EditorIcons")
 		var row_height = script_icon.get_size().y + (8 * screen_factor)
 		var rows = max(item_list.get_item_count() / item_list.max_columns, 1) + 1
@@ -766,8 +885,40 @@ func _adapt_list_height() -> void:
 				+ $PaletteMarginContainer/VBoxContainer/MarginContainer.get("custom_constants/margin_bottom") \
 				+ max(current_label.rect_size.y, last_label.rect_size.y)
 		var height = row_height * rows + margin
-		rect_size.y = clamp(height, 0, max_popup_size.y)
+		rect_size.y = clamp(height, 0, Vector2(palette_settings.width_LineEdit.text as float, palette_settings.max_height_LineEdit.text as float).y)
 
+
+func _setup_buttons() -> void:
+	settings_button.visible = true
+	match current_filter:
+		FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS, FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS, FILTER.TREE_FOLDER:
+			copy_button.visible = true
+			copy_button.text = "Copy File Path"
+			add_button.visible = false
+			signal_button.visible = false
+			context_button.visible = true if current_filter == FILTER.ALL_OPEN_SCRIPTS else false
+		FILTER.SELECT_NODE:
+			copy_button.visible = true
+			copy_button.text = "Copy Node Path"
+			add_button.visible = true
+			add_button.icon = get_icon("ScriptCreate", "EditorIcons")
+			signal_button.visible = true
+			context_button.visible = false
+		FILTER.SETTINGS, FILTER.INSPECTOR:
+			copy_button.visible = true
+			copy_button.text = "Copy Settings Path"
+			if current_filter == FILTER.SETTINGS:
+				add_button.visible = true
+				add_button.icon = get_icon("MultiEdit", "EditorIcons")
+			signal_button.visible = false
+			context_button.visible = false
+		FILTER.GOTO_LINE, FILTER.GOTO_METHOD, FILTER.HELP:
+			for button in [add_button, copy_button, signal_button, context_button]:
+				button.visible = false
+	
+	if item_list.get_item_count() < item_list.max_columns:
+		for button in [add_button, copy_button, context_button, signal_button]:
+			button.visible = false
 
 func _quick_sort_by_file_name(array : Array, lo : int, hi : int) -> void:
 	if lo < hi:
@@ -800,7 +951,83 @@ func _current_filter_displays_files() -> bool:
 	return not current_filter in [FILTER.SELECT_NODE, FILTER.SETTINGS, FILTER.HELP, FILTER.GOTO_LINE, FILTER.GOTO_METHOD, FILTER.INSPECTOR, FILTER.TREE_FOLDER]
 
 
-func _update_editor_settings() -> void: # connected to editor settings_changed signal in plugin.gd
+func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool = false) -> void:
+	if reset:
+		scenes.clear()
+		scripts.clear()
+		other_files.clear()
+		folders.clear()
+	
+	var script_icon = get_icon("Script", "EditorIcons")
+	for file in folder.get_file_count():
+		var file_path = folder.get_file_path(file)
+		var file_type = FILE_SYSTEM.get_file_type(file_path)
+		
+		if file_type.find("Script") != -1:
+			scripts[file_path] = {"Icon" : script_icon, "ScriptResource" : load(file_path)}
+		
+		elif file_type.find("Scene") != -1:
+			scenes[file_path] = {"Icon" : null}
+			
+			var scene = load(file_path).instance()
+			scenes[file_path].Icon = get_icon(scene.get_class(), "EditorIcons")
+			var attached_script = scene.get_script()
+			if attached_script:
+				attached_script.set_meta("Scene_Path", file_path)
+			scene.free()
+		
+		else:
+			other_files[file_path] = {"Icon" : get_icon(file_type, "EditorIcons")}
+	
+	for subdir in folder.get_subdir_count():
+		folders[folder.get_subdir(subdir).get_path()] = {"Subdir_Count" : folder.get_subdir(subdir).get_subdir_count(), \
+				"File_Count" : folder.get_subdir(subdir).get_file_count(), "Folder_Name" : folder.get_subdir(subdir).get_name(), \
+				"Parent_Path" : (folder.get_subdir(subdir).get_parent().get_path())}
+		_update_files_dictionary(folder.get_subdir(subdir))
+
+
+func _update_recent_files():
+	# to prevent unnecessarily updating cause multiple signals call this method (for ex.: changing scripts changes scenes as well)
+	if not recent_files_are_updating and current_main_screen in ["2D", "3D", "Script"]:
+		recent_files_are_updating = true
+		
+		yield(get_tree().create_timer(.1), "timeout")
+		
+		if current_label.has_meta("Path"):
+			last_label.text = current_label.text
+			last_label.remove_meta("Help")
+			last_label.set_meta("Path", current_label.get_meta("Path"))
+		elif current_label.has_meta("Help") and palette_settings.include_help_pages_button.pressed:
+			last_label.remove_meta("Path")
+			last_label.text = current_label.text
+			last_label.set_meta("Help", current_label.get_meta("Help"))
+		else:
+			last_label.text = current_label.text
+			last_label.remove_meta("Path")
+			last_label.remove_meta("Help")
+		
+		if current_main_screen == "Script":
+			if EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).get_selected_items() and \
+					EDITOR.get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).get_selected_items()[0] >= EDITOR.get_open_scripts().size():
+				if palette_settings.include_help_pages_button.pressed:
+					current_label.text = SCRIPT_LIST.get_item_text(SCRIPT_LIST.get_selected_items()[0])
+					current_label.remove_meta("Path")
+					current_label.set_meta("Help", SCRIPT_LIST.get_selected_items()[0])
+			elif EDITOR.get_current_script():
+				var path = EDITOR.get_current_script().resource_path
+				current_label.text = path if palette_settings.show_path_for_recent_button.pressed else path.get_file()
+				current_label.remove_meta("Help")
+				current_label.set_meta("Path", path)
+		elif current_main_screen in ["2D", "3D"] and INTERFACE.get_edited_scene_root():
+			var path = INTERFACE.get_edited_scene_root().filename
+			current_label.text = path if palette_settings.show_path_for_recent_button.pressed else path.get_file()
+			current_label.remove_meta("Help")
+			current_label.set_meta("Path", path)
+		
+		recent_files_are_updating = false
+
+
+func _update_editor_settings() -> void: 
 	for setting in EDITOR_SETTINGS.get_property_list():
 		# general settings only
 		if setting.name and setting.name.find("/") != -1 and setting.usage & PROPERTY_USAGE_EDITOR and not setting.name.begins_with("favorite_projects/"):
@@ -814,33 +1041,34 @@ func _update_project_settings() -> void:
 			project_settings[setting.name] = setting
 
 
-func _on_SwitchIcon_pressed() -> void:
-	_switch_to_recent_file()
-
-
-func _switch_to_recent_file() -> void:
-		if last_label.has_meta("Path"):
-			if current_main_screen in ["2D", "3D", "Script"]:
-				_open_scene(last_label.get_meta("Path")) if scenes.has(last_label.get_meta("Path")) \
-						else _open_script(scripts[last_label.get_meta("Path")].ScriptResource)
-			else:
-				_open_scene(current_label.get_meta("Path")) if scenes.has(current_label.get_meta("Path")) \
-						else _open_script(scripts[current_label.get_meta("Path")].ScriptResource)
-		hide()
-
-
-func _on_AddButton_pressed() -> void:
-	if filter.text.begins_with(keyword_editor_settings):
-		settings_adder._show()
-	
-	elif filter.text.begins_with(keyword_select_node):
-		var selection = item_list.get_selected_items()
-		if selection:
-			var selected_index = selection[0]
-			var selected_name = item_list.get_item_text(selected_index).strip_edges()
-			var node_path = item_list.get_item_text(selected_index - 1) + selected_name if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
-			script_added_to = INTERFACE.get_edited_scene_root().get_node(node_path)
-			var file_path = INTERFACE.get_edited_scene_root().filename.get_base_dir()
-			hide()
-			SCRIPT_CREATE_DIALOG.config(script_added_to.get_class(), (file_path if file_path else "res:/") + "/" + selected_name + ".gd")
-			SCRIPT_CREATE_DIALOG.popup_centered()
+func _get_dock(dclass : String) -> Node: # dclass : "FileSystemDock" || "ImportDock" || "NodeDock" || "SceneTreeDock" || "InspectorDock"
+	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(0).get_children(): # LEFT left
+		for dock in tabcontainer.get_children():
+			if dock.get_class() == dclass:
+				if tabcontainer.get_current_tab_control() != dock:
+					push_warning("Dock currently not visible") 
+					return null
+				return dock
+	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(0).get_children(): # LEFT right
+		for dock in tabcontainer.get_children():
+			if dock.get_class() == dclass:
+				if tabcontainer.get_current_tab_control() != dock:
+					push_warning("Dock currently not visible") 
+					return null
+				return dock
+	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(0).get_children(): # RIGHT left
+		for dock in tabcontainer.get_children():
+			if dock.get_class() == dclass:
+				if tabcontainer.get_current_tab_control() != dock:
+					push_warning("Dock currently not visible") 
+					return null
+				return dock
+	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(1).get_children(): # RIGHT right
+		for dock in tabcontainer.get_children():
+			if dock.get_class() == dclass:
+				if tabcontainer.get_current_tab_control() != dock:
+					push_warning("Dock currently not visible")
+					return null
+				return dock
+	push_warning("Command Palette Plugin: Error dock finding dock.")
+	return null
