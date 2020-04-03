@@ -184,7 +184,8 @@ func _on_SettingsButton_pressed() -> void:
 
 func _on_ContextButton_pressed() -> void:
 	var selection = item_list.get_selected_items()
-	if selection and not BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(2).pressed: 
+	if selection and not BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(\
+			BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child_count() - 1).pressed: 
 	# DFM is currently exempt
 		if current_filter == FILTER.ALL_OPEN_SCRIPTS:
 			if current_main_screen != "Script":
@@ -203,6 +204,7 @@ func _on_ContextButton_pressed() -> void:
 					push_warning("Command Palette Plugin: Error getting context menu from script list.")
 					return
 			pos.y += 5
+			hide()
 			var simul_rmb = InputEventMouseButton.new()
 			simul_rmb.button_index = BUTTON_RIGHT
 			simul_rmb.pressed = true
@@ -229,7 +231,7 @@ func _on_ContextButton_pressed() -> void:
 			var node_path = item_list.get_item_text(selection[0] - 1) + selected_name if item_list.get_item_text(selection[0] - 1).begins_with("./") else "."
 			sel.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
 			yield(get_tree().create_timer(.01), "timeout")
-			var pos = Vector2(30, 5) # x = 30 so we don't click the folding arrow
+			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
 			while selected_name != scene_tree.get_item_at_position(pos).get_text(0):
 				pos.x = 5
 				pos.y += 5
@@ -237,6 +239,7 @@ func _on_ContextButton_pressed() -> void:
 					push_warning("Command Palette Plugin: Error getting context menu from script list.")
 					return
 			pos.y += 5
+			hide()
 			var simul_rmb = InputEventMouseButton.new()
 			simul_rmb.button_index = BUTTON_RIGHT
 			simul_rmb.pressed = true
