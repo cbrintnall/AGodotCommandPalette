@@ -197,7 +197,7 @@ func _on_ContextButton_pressed() -> void:
 				
 			yield(get_tree().create_timer(.01), "timeout")
 			var selected_name = item_list.get_item_text(selection[0])
-			var pos = Vector2(15, 5)
+			var pos = Vector2(15, 5) * screen_factor
 			while selected_name != SCRIPT_LIST.get_item_text(SCRIPT_LIST.get_item_at_position(pos)):
 				pos.y += 5
 				if pos.y > OS.get_screen_size().y:
