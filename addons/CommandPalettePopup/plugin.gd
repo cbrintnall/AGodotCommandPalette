@@ -34,11 +34,10 @@ func _init_palette() -> void:
 	command_palette_popup.SCRIPT_LIST = get_editor_interface().get_script_editor().get_child(0).get_child(1).get_child(0).get_child(0).get_child(1)
 	add_control_to_container(EditorPlugin.CONTAINER_TOOLBAR, command_palette_popup)
 	
-	get_editor_interface().get_resource_filesystem().connect("filesystem_changed", command_palette_popup, "_on_filesystem_changed")
 	connect("main_screen_changed", command_palette_popup, "_on_main_screen_changed")
 	connect("scene_changed", command_palette_popup, "_on_scene_changed")
-	get_editor_interface().get_script_editor().connect("editor_script_changed", command_palette_popup, "_on_editor_script_changed")
-	get_editor_interface().get_script_editor().get_child(0).get_child(1).get_child(0).get_child(0).get_child(1).connect("item_selected", command_palette_popup, "_on_help_page_selected")
+	get_editor_interface().get_resource_filesystem().connect("filesystem_changed", command_palette_popup, "_on_filesystem_changed")
+	get_editor_interface().get_script_editor().get_child(0).get_child(1).get_child(1).connect("tab_changed", command_palette_popup, "_on_script_tab_changed")
 	get_script_create_dialog().connect("script_created", command_palette_popup, "_on_script_created")
 	get_editor_interface().get_editor_settings().connect("settings_changed", command_palette_popup, "_update_editor_settings")
 	

@@ -18,10 +18,6 @@ onready var switch_button = $PaletteMarginContainer/VBoxContainer/HSplitContaine
 onready var settings_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/SettingsButton
 onready var signal_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton
 onready var signal_popup = $PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton/SignalPopupMenu
-onready var keywords = [palette_settings.keyword_goto_line_LineEdit.text, palette_settings.keyword_goto_method_LineEdit.text, \
-		palette_settings.keyword_all_files_LineEdit.text, palette_settings.keyword_all_scenes_LineEdit.text, palette_settings.keyword_all_scripts_LineEdit.text, \
-		palette_settings.keyword_all_open_scenes_LineEdit.text, palette_settings.keyword_select_node_LineEdit.text, \
-		palette_settings.keyword_editor_settings_LineEdit.text, palette_settings.keyword_set_inspector_LineEdit.text]
 	
 var editor_settings : Dictionary # holds all editor settings [path] : {settings_dictionary}
 var project_settings : Dictionary # holds all project settings [path] : {settings_dictionary}
@@ -33,6 +29,7 @@ var secondary_color : Color = Color(1, 1, 1, .3) # color for 3rd column in ItemL
 var screen_factor = max(OS.get_screen_dpi() / 100, 1)
 var current_main_screen : String = ""
 var script_panel_visible : bool # only updated on context button press
+var old_dock_tab : Control # holds the old tab when switching dock for context menu
 var script_added_to : Node # the node a script, which is created with this plugin, will be added to
 var files_are_updating : bool = false
 var recent_files_are_updating : bool  = false
@@ -93,11 +90,7 @@ func _on_scene_changed(new_root : Node) -> void:
 	_update_recent_files()
 
 
-func _on_editor_script_changed(new_script : Script) -> void:
-	_update_recent_files()
-
-
-func _on_help_page_selected(selected_index : int):
+func _on_script_tab_changed(tab : int) -> void:
 	_update_recent_files()
 
 
@@ -191,35 +184,131 @@ func _on_SettingsButton_pressed() -> void:
 
 func _on_ContextButton_pressed() -> void:
 	var selection = item_list.get_selected_items()
-	if selection and current_filter == FILTER.ALL_OPEN_SCRIPTS:
-		if current_main_screen != "Script":
-			INTERFACE.set_main_screen_editor("Script")
-			yield(get_tree(), "idle_frame")
-		
-		script_panel_visible = SCRIPT_PANEL.visible
-		if not script_panel_visible:
-			SCRIPT_PANEL.show()
-		yield(get_tree().create_timer(.01), "timeout")
-		var selected_name = item_list.get_item_text(selection[0])
-		var simul_rmb = InputEventMouseButton.new()
-		simul_rmb.button_index = BUTTON_RIGHT
-		simul_rmb.pressed = true
-		var pos = Vector2(15, 5)
-		while selected_name != SCRIPT_LIST.get_item_text(SCRIPT_LIST.get_item_at_position(pos)):
+	if selection and not BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(2).pressed: 
+	# DFM is currently exempt
+		if current_filter == FILTER.ALL_OPEN_SCRIPTS:
+			if current_main_screen != "Script":
+				INTERFACE.set_main_screen_editor("Script")
+				yield(get_tree(), "idle_frame")
+			script_panel_visible = SCRIPT_PANEL.visible
+			if not script_panel_visible:
+				SCRIPT_PANEL.show()
+				
+			yield(get_tree().create_timer(.01), "timeout")
+			var selected_name = item_list.get_item_text(selection[0])
+			var pos = Vector2(15, 5)
+			while selected_name != SCRIPT_LIST.get_item_text(SCRIPT_LIST.get_item_at_position(pos)):
+				pos.y += 5
+				if pos.y > OS.get_screen_size().y:
+					push_warning("Command Palette Plugin: Error getting context menu from script list.")
+					return
 			pos.y += 5
-			if pos.y > OS.get_screen_size().y:
-				push_warning("Command Palette Plugin: Error getting context menu from script list.")
-				return
-		pos.y += 5
-		simul_rmb.position = SCRIPT_LIST.rect_global_position + pos
-		Input.parse_input_event(simul_rmb)
-		for child in EDITOR.get_children():
-			if child is PopupMenu:
-				child.allow_search = true
-				child.call_deferred("set_position", Vector2(SCRIPT_LIST.rect_global_position.x + SCRIPT_LIST.rect_size.x + pos.x, \
-						SCRIPT_LIST.rect_global_position.y + pos.y))
-				if not child.is_connected("popup_hide", self, "_on_script_context_menu_hide"):
-					child.connect("popup_hide", self, "_on_script_context_menu_hide")
+			var simul_rmb = InputEventMouseButton.new()
+			simul_rmb.button_index = BUTTON_RIGHT
+			simul_rmb.pressed = true
+			simul_rmb.position = SCRIPT_LIST.rect_global_position + pos
+			Input.parse_input_event(simul_rmb)
+			for child in EDITOR.get_children():
+				if child is PopupMenu:
+					child.allow_search = true
+					child.call_deferred("set_position", OS.get_screen_size() / 2)
+					if not child.is_connected("popup_hide", self, "_on_script_context_menu_hide"):
+						child.connect("popup_hide", self, "_on_script_context_menu_hide")
+		
+		elif current_filter == FILTER.SELECT_NODE:
+			var scene_tree_dock = _get_dock("SceneTreeDock")
+			old_dock_tab = scene_tree_dock.get_parent().get_current_tab_control()
+			var i = 0
+			while scene_tree_dock.get_parent().get_current_tab_control() != scene_tree_dock:
+				scene_tree_dock.get_parent().current_tab = i
+				i += 1
+			var scene_tree = scene_tree_dock.get_child(3).get_child(0) as Tree
+			var selected_name = item_list.get_item_text(selection[0])
+			var sel = INTERFACE.get_selection()
+			sel.clear()
+			var node_path = item_list.get_item_text(selection[0] - 1) + selected_name if item_list.get_item_text(selection[0] - 1).begins_with("./") else "."
+			sel.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
+			yield(get_tree().create_timer(.01), "timeout")
+			var pos = Vector2(30, 5) # x = 30 so we don't click the folding arrow
+			while selected_name != scene_tree.get_item_at_position(pos).get_text(0):
+				pos.x = 5
+				pos.y += 5
+				if pos.y > OS.get_screen_size().y:
+					push_warning("Command Palette Plugin: Error getting context menu from script list.")
+					return
+			pos.y += 5
+			var simul_rmb = InputEventMouseButton.new()
+			simul_rmb.button_index = BUTTON_RIGHT
+			simul_rmb.pressed = true
+			simul_rmb.position = scene_tree.rect_global_position + pos
+			Input.parse_input_event(simul_rmb)
+			for child in scene_tree_dock.get_children():
+				if child is PopupMenu:
+					child.allow_search = true
+					child.call_deferred("set_position", OS.get_screen_size() / 2)
+					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
+						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
+		
+		elif current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS]:
+			var path = item_list.get_item_text(selection[0] - 1) + ("/" if not item_list.get_item_text(selection[0] - 1) == "res://" else "") \
+					+ item_list.get_item_text(selection[0])
+			var filesystem_dock = _get_dock("FileSystemDock")
+			var file_tree : Tree
+			var file_list : ItemList
+			var file_split_view : bool
+			for child in filesystem_dock.get_children():
+				if child is VSplitContainer:
+					file_tree = child.get_child(0)
+					file_list = child.get_child(1).get_child(1)
+					file_split_view = child.get_child(1).visible
+			old_dock_tab = filesystem_dock.get_parent().get_current_tab_control()
+			var i = 0
+			while filesystem_dock.get_parent().get_current_tab_control() != filesystem_dock:
+				filesystem_dock.get_parent().current_tab = i
+				i += 1
+			INTERFACE.select_file(path)
+			if file_split_view:
+				var pos = Vector2(30, 5) # x = 30 so we don't click the folding arrow
+				while path.get_file() != file_list.get_item_text(file_list.get_item_at_position(pos)):
+					pos.x = 5
+					pos.y += 5
+					if pos.y > OS.get_screen_size().y:
+						push_warning("Command Palette Plugin: Error getting context menu from script list.")
+						return
+				pos.y += 5
+				hide()
+				file_list.emit_signal("item_rmb_selected", file_list.get_selected_items()[0], pos)
+			else:
+				var pos = Vector2(30, 5) # x = 30 so we don't click the folding arrow
+				while path.get_file() != file_tree.get_item_at_position(pos).get_text(0):
+					pos.x = 5
+					pos.y += 5
+					if pos.y > OS.get_screen_size().y:
+						push_warning("Command Palette Plugin: Error getting context menu from script list.")
+						return
+				pos.y += 5
+				hide()
+				file_tree.emit_signal("item_rmb_selected", pos)
+			
+			for child in filesystem_dock.get_children():
+				if child is PopupMenu:
+					child.allow_search = true
+					child.call_deferred("set_position", OS.get_screen_size() / 2)
+					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
+						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
+
+
+func _on_script_context_menu_hide() -> void:
+	if not script_panel_visible:
+		SCRIPT_PANEL.hide()
+
+
+func _on_node_and_file_context_menu_hide() -> void:
+	var i = 0
+	while old_dock_tab != old_dock_tab.get_parent().get_current_tab_control():
+		old_dock_tab.get_parent().current_tab = i
+		i += 1
+	old_dock_tab = null
 
 
 func _on_SignalButton_pressed() -> void:
@@ -242,7 +331,8 @@ func _on_SignalPopupMenu_index_pressed(index : int) -> void:
 	var selection = INTERFACE.get_selection()
 	selection.clear()
 	var selected_index = item_list.get_selected_items()[0]
-	var node_path = item_list.get_item_text(selected_index - 1) + item_list.get_item_text(selected_index) if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
+	var node_path = item_list.get_item_text(selected_index - 1) + item_list.get_item_text(selected_index) \
+			if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
 	selection.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
 	yield(get_tree().create_timer(.01), "timeout")
 	_get_node_dock_tree_item(connection_dock_tree.get_root(), selected_name, connection_dock_tree)
@@ -265,11 +355,6 @@ func _on_SignalPopupMenu_focus_exited() -> void:
 	filter.call_deferred("grab_focus")
 
 
-func _on_script_context_menu_hide() -> void:
-	if not script_panel_visible:
-		SCRIPT_PANEL.hide()
-
-
 func _on_CommandPalettePopup_popup_hide() -> void:
 	filter.clear()
 
@@ -281,6 +366,11 @@ func _on_Filter_text_changed(new_txt : String) -> void:
 		if selection:
 			if current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS, FILTER.SETTINGS]:
 				var key = ""
+				var keywords = [palette_settings.keyword_goto_line_LineEdit.text, palette_settings.keyword_goto_method_LineEdit.text, \
+						palette_settings.keyword_all_files_LineEdit.text, palette_settings.keyword_all_scenes_LineEdit.text, \
+						palette_settings.keyword_all_scripts_LineEdit.text, palette_settings.keyword_all_open_scenes_LineEdit.text, \
+						palette_settings.keyword_select_node_LineEdit.text, palette_settings.keyword_editor_settings_LineEdit.text, \
+						palette_settings.keyword_set_inspector_LineEdit.text]
 				for keyword in keywords:
 					if filter.text.begins_with(keyword):
 						key = keyword
@@ -493,7 +583,7 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		popup_centered()
 		filter.grab_focus()
 		script_added_to = null
-	
+
 	item_list.clear()
 	var search_string : String = filter.text
 	
@@ -896,14 +986,14 @@ func _setup_buttons() -> void:
 			copy_button.text = "Copy File Path"
 			add_button.visible = false
 			signal_button.visible = false
-			context_button.visible = true if current_filter == FILTER.ALL_OPEN_SCRIPTS else false
+			context_button.visible = true if current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS, FILTER.ALL_OPEN_SCRIPTS] else false
 		FILTER.SELECT_NODE:
 			copy_button.visible = true
 			copy_button.text = "Copy Node Path"
 			add_button.visible = true
 			add_button.icon = get_icon("ScriptCreate", "EditorIcons")
 			signal_button.visible = true
-			context_button.visible = false
+			context_button.visible = true
 		FILTER.SETTINGS, FILTER.INSPECTOR:
 			copy_button.visible = true
 			copy_button.text = "Copy Settings Path"
@@ -1045,30 +1135,18 @@ func _get_dock(dclass : String) -> Node: # dclass : "FileSystemDock" || "ImportD
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(0).get_children(): # LEFT left
 		for dock in tabcontainer.get_children():
 			if dock.get_class() == dclass:
-				if tabcontainer.get_current_tab_control() != dock:
-					push_warning("Dock currently not visible") 
-					return null
 				return dock
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(0).get_children(): # LEFT right
 		for dock in tabcontainer.get_children():
 			if dock.get_class() == dclass:
-				if tabcontainer.get_current_tab_control() != dock:
-					push_warning("Dock currently not visible") 
-					return null
 				return dock
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(0).get_children(): # RIGHT left
 		for dock in tabcontainer.get_children():
 			if dock.get_class() == dclass:
-				if tabcontainer.get_current_tab_control() != dock:
-					push_warning("Dock currently not visible") 
-					return null
 				return dock
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(1).get_children(): # RIGHT right
 		for dock in tabcontainer.get_children():
 			if dock.get_class() == dclass:
-				if tabcontainer.get_current_tab_control() != dock:
-					push_warning("Dock currently not visible")
-					return null
 				return dock
 	push_warning("Command Palette Plugin: Error dock finding dock.")
 	return null

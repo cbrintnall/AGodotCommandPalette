@@ -3,7 +3,7 @@
 **Changelog for 1.5.0**:
 
 - Open documentation pages are now included in the default list.
-- context menu for the "open scripts" filter (via a button on the right).
+- context menu for the FileSystemDock, NodeDock and SceneTreeDock (via a button on the right).
 - signal connection via a button using the "select a node" filter.
 - removed export vars and moved them to a dedicated settings page. Available: hide script panel on start, show docs in default list, keywords for filters, keyboard shortcut, popup size, adaptive popup size, show path for recent files
 

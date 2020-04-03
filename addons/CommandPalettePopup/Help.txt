@@ -19,5 +19,4 @@ Opening a script will switch to the scene tab the script is attached to. It only
 
 While the popup is visible, pressing the shortcut again will switch to the last opened file. The two labels at the bottom show the current and the last file opened. 
 
-A copy button to quickly copy the file, node or settings path to the clipboard is available. 
-
+A copy button to quickly copy the file, node or settings path to the clipboard is available. There is a "context" button to access the context menu (rmb click) of the selected item for the FileSystemDock, NodeDock and SceneTreeDock.
