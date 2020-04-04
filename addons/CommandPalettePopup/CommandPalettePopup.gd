@@ -334,7 +334,7 @@ func _on_SignalButton_pressed() -> void:
 	var selected_index = item_list.get_selected_items()[0]
 	var selected_name = item_list.get_item_text(selected_index)
 	var path : String = item_list.get_item_text(selected_index - 1) + selected_name if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
-	var node = get_node(path)
+	var node = INTERFACE.get_edited_scene_root().get_node(path)
 	signal_popup.clear()
 	signal_popup.rect_size = Vector2(1, 1) # to adapt the height
 	for signals in node.get_signal_list():
