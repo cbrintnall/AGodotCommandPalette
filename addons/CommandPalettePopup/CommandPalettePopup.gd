@@ -179,14 +179,15 @@ func _on_AddButton_pressed() -> void:
 
 
 func _on_SettingsButton_pressed() -> void:
-	palette_settings.popup_centered()
+	palette_settings.popup_centered(Vector2(1000, 600) * screen_factor)
 
 
 func _on_ContextButton_pressed() -> void:
 	var selection = item_list.get_selected_items()
-	if selection and not BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(\
-			BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child_count() - 1).pressed: 
-	# DFM is currently exempt
+	if selection:
+		var dfm_enabled = BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(\
+			BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child_count() - 1).pressed
+		
 		if current_filter == FILTER.ALL_OPEN_SCRIPTS:
 			if current_main_screen != "Script":
 				INTERFACE.set_main_screen_editor("Script")
@@ -194,16 +195,16 @@ func _on_ContextButton_pressed() -> void:
 			script_panel_visible = SCRIPT_PANEL.visible
 			if not script_panel_visible:
 				SCRIPT_PANEL.show()
-				
+			
 			yield(get_tree().create_timer(.01), "timeout")
 			var selected_name = item_list.get_item_text(selection[0])
 			var pos = Vector2(15, 5) * screen_factor
 			while selected_name != SCRIPT_LIST.get_item_text(SCRIPT_LIST.get_item_at_position(pos)):
-				pos.y += 5
+				pos.y += 5 * screen_factor
 				if pos.y > OS.get_screen_size().y:
 					push_warning("Command Palette Plugin: Error getting context menu from script list.")
 					return
-			pos.y += 5
+			pos.y += 5 * screen_factor
 			hide()
 			var simul_rmb = InputEventMouseButton.new()
 			simul_rmb.button_index = BUTTON_RIGHT
@@ -213,7 +214,8 @@ func _on_ContextButton_pressed() -> void:
 			for child in EDITOR.get_children():
 				if child is PopupMenu:
 					child.allow_search = true
-					child.call_deferred("set_position", OS.get_screen_size() / 2)
+					yield(get_tree(), "idle_frame")
+					child.call_deferred("set_position", SCRIPT_LIST.rect_global_position + Vector2(SCRIPT_LIST.rect_size.x - 25, pos.y))
 					if not child.is_connected("popup_hide", self, "_on_script_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_script_context_menu_hide")
 		
@@ -226,6 +228,10 @@ func _on_ContextButton_pressed() -> void:
 				i += 1
 			var scene_tree = scene_tree_dock.get_child(3).get_child(0) as Tree
 			var selected_name = item_list.get_item_text(selection[0])
+			if dfm_enabled:
+				scene_tree_dock.get_parent().show()
+				scene_tree_dock.get_parent().get_parent().show()
+				scene_tree_dock.get_parent().get_parent().get_parent().show()
 			var sel = INTERFACE.get_selection()
 			sel.clear()
 			var node_path = item_list.get_item_text(selection[0] - 1) + selected_name if item_list.get_item_text(selection[0] - 1).begins_with("./") else "."
@@ -238,7 +244,7 @@ func _on_ContextButton_pressed() -> void:
 				if pos.y > OS.get_screen_size().y:
 					push_warning("Command Palette Plugin: Error getting context menu from script list.")
 					return
-			pos.y += 5
+			pos.y += 5 * screen_factor
 			hide()
 			var simul_rmb = InputEventMouseButton.new()
 			simul_rmb.button_index = BUTTON_RIGHT
@@ -248,7 +254,7 @@ func _on_ContextButton_pressed() -> void:
 			for child in scene_tree_dock.get_children():
 				if child is PopupMenu:
 					child.allow_search = true
-					child.call_deferred("set_position", OS.get_screen_size() / 2)
+					child.call_deferred("set_position", scene_tree.rect_global_position + Vector2(0, pos.y + 25 * screen_factor))
 					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
 		
@@ -270,33 +276,37 @@ func _on_ContextButton_pressed() -> void:
 				filesystem_dock.get_parent().current_tab = i
 				i += 1
 			INTERFACE.select_file(path)
+			if dfm_enabled:
+				filesystem_dock.get_parent().show()
+				filesystem_dock.get_parent().get_parent().show()
+				filesystem_dock.get_parent().get_parent().get_parent().show()
+			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
 			if file_split_view:
-				var pos = Vector2(30, 5) # x = 30 so we don't click the folding arrow
 				while path.get_file() != file_list.get_item_text(file_list.get_item_at_position(pos)):
 					pos.x = 5
 					pos.y += 5
 					if pos.y > OS.get_screen_size().y:
 						push_warning("Command Palette Plugin: Error getting context menu from script list.")
 						return
-				pos.y += 5
+				pos.y += 5 * screen_factor
 				hide()
 				file_list.emit_signal("item_rmb_selected", file_list.get_selected_items()[0], pos)
 			else:
-				var pos = Vector2(30, 5) # x = 30 so we don't click the folding arrow
 				while path.get_file() != file_tree.get_item_at_position(pos).get_text(0):
 					pos.x = 5
 					pos.y += 5
 					if pos.y > OS.get_screen_size().y:
 						push_warning("Command Palette Plugin: Error getting context menu from script list.")
 						return
-				pos.y += 5
+				pos.y += 5 * screen_factor
 				hide()
 				file_tree.emit_signal("item_rmb_selected", pos)
 			
 			for child in filesystem_dock.get_children():
 				if child is PopupMenu:
 					child.allow_search = true
-					child.call_deferred("set_position", OS.get_screen_size() / 2)
+					child.call_deferred("set_position", (file_tree.rect_global_position if not file_split_view else \
+							file_list.rect_global_position) + Vector2(0, pos.y + 25 * screen_factor))
 					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
 
@@ -311,6 +321,12 @@ func _on_node_and_file_context_menu_hide() -> void:
 	while old_dock_tab != old_dock_tab.get_parent().get_current_tab_control():
 		old_dock_tab.get_parent().current_tab = i
 		i += 1
+	var dfm_enabled = BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(\
+			BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child_count() - 1).pressed
+	if dfm_enabled:
+		old_dock_tab.get_parent().hide()
+		old_dock_tab.get_parent().get_parent().hide()
+		old_dock_tab.get_parent().get_parent().get_parent().hide()
 	old_dock_tab = null
 
 

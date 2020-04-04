@@ -88,7 +88,7 @@ func load_default_settings() -> void:
 	keyword_set_inspector_LineEdit.text = "set "
 	keyword_folder_tree_LineEdit.text = "res:"
 	hide_script_panel_button.pressed = false
-	include_help_pages_button.pressed = true
+	include_help_pages_button.pressed = false
 	adaptive_height_button.pressed = true
 	show_path_for_recent_button.pressed = false
 

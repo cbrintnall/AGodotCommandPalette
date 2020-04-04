@@ -46,7 +46,6 @@ text = "Hide script panel on start"
 margin_top = 44.0
 margin_right = 924.0
 margin_bottom = 84.0
-pressed = true
 text = "Include help pages in open script list"
 
 [node name="AdaptiveHeight" type="CheckButton" parent="MarginContainer/VBoxContainer/SettingsVB"]
