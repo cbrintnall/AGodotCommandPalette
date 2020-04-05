@@ -220,6 +220,9 @@ func _on_ContextButton_pressed() -> void:
 						child.connect("popup_hide", self, "_on_script_context_menu_hide")
 		
 		elif current_filter == FILTER.SELECT_NODE:
+			if not current_main_screen in ["2D", "3D"]:
+				INTERFACE.set_main_screen_editor("3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.set_main_screen_editor("2D")
+				yield(get_tree(), "idle_frame")
 			var scene_tree_dock = _get_dock("SceneTreeDock")
 			old_dock_tab = scene_tree_dock.get_parent().get_current_tab_control()
 			var i = 0
