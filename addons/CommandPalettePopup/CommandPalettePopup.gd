@@ -792,10 +792,10 @@ func _build_item_list(search_string : String) -> void:
 			var method_dict : Dictionary # maps methods to their line position
 			var code_editor : TextEdit = _get_current_code_editor()
 			for method in current_script.get_script_method_list():
-				if method.name != "_init": # _init always appears
-					if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
-						continue
-					var result = code_editor.search("func " + method.name, 0, 0, 0)
+				if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
+					continue
+				var result = code_editor.search("func " + method.name, 0, 0, 0)
+				if result: # get_script_method_list(): also lists methods which aren't explicitly coded (like _init and _ready)
 					var line = result[TextEdit.SEARCH_RESULT_LINE]
 					method_dict[line] = method.name
 			var lines = method_dict.keys() # get_script_method_list() doesnt give the path_matched_list in order of appearance in the script
