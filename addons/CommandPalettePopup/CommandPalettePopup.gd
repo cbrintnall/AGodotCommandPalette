@@ -242,7 +242,7 @@ func _on_ContextButton_pressed() -> void:
 				pos.x = 5
 				pos.y += 5
 				if pos.y > OS.get_screen_size().y:
-					push_warning("Command Palette Plugin: Error getting context menu from script list.")
+					push_warning("Command Palette Plugin: Error getting context menu from SceneTreeDock.")
 					return
 			pos.y += 5 * screen_factor
 			hide()
@@ -282,11 +282,12 @@ func _on_ContextButton_pressed() -> void:
 				filesystem_dock.get_parent().get_parent().get_parent().show()
 			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
 			if file_split_view:
+				yield(get_tree().create_timer(.01), "timeout")
 				while path.get_file() != file_list.get_item_text(file_list.get_item_at_position(pos)):
 					pos.x = 5
 					pos.y += 5
 					if pos.y > OS.get_screen_size().y:
-						push_warning("Command Palette Plugin: Error getting context menu from script list.")
+						push_warning("Command Palette Plugin: Error getting context menu from FileSystemDock.")
 						return
 				pos.y += 5 * screen_factor
 				hide()
@@ -296,7 +297,7 @@ func _on_ContextButton_pressed() -> void:
 					pos.x = 5
 					pos.y += 5
 					if pos.y > OS.get_screen_size().y:
-						push_warning("Command Palette Plugin: Error getting context menu from script list.")
+						push_warning("Command Palette Plugin: Error getting context menu from FileSystemDock.")
 						return
 				pos.y += 5 * screen_factor
 				hide()
@@ -795,7 +796,7 @@ func _build_item_list(search_string : String) -> void:
 				if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
 					continue
 				var result = code_editor.search("func " + method.name, 0, 0, 0)
-				if result: # get_script_method_list(): also lists methods which aren't explicitly coded (like _init and _ready)
+				if result: # get_script_method_list() also lists methods which aren't explicitly coded (like _init and _ready)
 					var line = result[TextEdit.SEARCH_RESULT_LINE]
 					method_dict[line] = method.name
 			var lines = method_dict.keys() # get_script_method_list() doesnt give the path_matched_list in order of appearance in the script
