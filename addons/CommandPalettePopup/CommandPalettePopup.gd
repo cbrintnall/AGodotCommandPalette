@@ -790,12 +790,13 @@ func _build_item_list(search_string : String) -> void:
 		FILTER.GOTO_METHOD:
 			var current_script = EDITOR.get_current_script()
 			var method_dict : Dictionary # maps methods to their line position
+			var code_editor : TextEdit = _get_current_code_editor()
 			for method in current_script.get_script_method_list():
 				if method.name != "_init": # _init always appears
 					if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
 						continue
-					var pos = current_script.source_code.find("func " + method.name)
-					var line = current_script.source_code.count("\n", 0, pos)
+					var result = code_editor.search("func " + method.name, 0, 0, 0)
+					var line = result[TextEdit.SEARCH_RESULT_LINE]
 					method_dict[line] = method.name
 			var lines = method_dict.keys() # get_script_method_list() doesnt give the path_matched_list in order of appearance in the script
 			lines.sort()
@@ -1153,19 +1154,28 @@ func _update_project_settings() -> void:
 func _get_dock(dclass : String) -> Node: # dclass : "FileSystemDock" || "ImportDock" || "NodeDock" || "SceneTreeDock" || "InspectorDock"
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(0).get_children(): # LEFT left
 		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass:
+			if dock.get_class() == dclass or dock.name == dclass:
 				return dock
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(0).get_children(): # LEFT right
 		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass:
+			if dock.get_class() == dclass or dock.name == dclass:
 				return dock
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(0).get_children(): # RIGHT left
 		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass:
+			if dock.get_class() == dclass or dock.name == dclass:
 				return dock
 	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(1).get_children(): # RIGHT right
 		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass:
+			if dock.get_class() == dclass or dock.name == dclass:
 				return dock
 	push_warning("Command Palette Plugin: Error dock finding dock.")
 	return null
+
+
+func _get_current_code_editor() -> TextEdit:
+	var script_index = 0
+	for script in EDITOR.get_open_scripts():
+		if script == EDITOR.get_current_script():
+			break
+		script_index += 1
+	return EDITOR.get_child(0).get_child(1).get_child(1).get_child(script_index).get_child(0).get_child(0).get_child(0) as TextEdit # :(
