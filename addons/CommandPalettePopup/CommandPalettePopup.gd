@@ -327,7 +327,8 @@ func _on_node_and_file_context_menu_hide() -> void:
 	if dfm_enabled:
 		old_dock_tab.get_parent().hide()
 		old_dock_tab.get_parent().get_parent().hide()
-		old_dock_tab.get_parent().get_parent().get_parent().hide()
+		if old_dock_tab.get_parent().get_parent().get_parent() != BASE_CONTROL_VBOX.get_child(1).get_child(1): 
+			old_dock_tab.get_parent().get_parent().get_parent().hide() 
 	old_dock_tab = null
 
 
