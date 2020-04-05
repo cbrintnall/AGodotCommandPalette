@@ -344,21 +344,21 @@ func _on_SignalButton_pressed() -> void:
 
 
 func _on_SignalPopupMenu_index_pressed(index : int) -> void:
-	var selected_name = signal_popup.get_item_text(index) + "()"
+	var signal_name = signal_popup.get_item_text(index) + "("
 	var node_dock = _get_dock("NodeDock")
 	var connection_dock_tree = node_dock.get_child(1).get_child(0)
-	var selection = INTERFACE.get_selection()
-	selection.clear()
 	var selected_index = item_list.get_selected_items()[0]
 	var node_path = item_list.get_item_text(selected_index - 1) + item_list.get_item_text(selected_index) \
 			if item_list.get_item_text(selected_index - 1).begins_with("./") else "."
+	var selection = INTERFACE.get_selection()
+	selection.clear()
 	selection.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
 	yield(get_tree().create_timer(.01), "timeout")
-	_get_node_dock_tree_item(connection_dock_tree.get_root(), selected_name, connection_dock_tree)
+	_get_node_dock_tree_item(connection_dock_tree.get_root(), signal_name, connection_dock_tree)
 
 
 func _get_node_dock_tree_item(root : TreeItem, signal_name : String, connection_dock_tree : Tree) -> void:
-	if root and root.get_text(0) == signal_name:
+	if root and root.get_text(0).begins_with(signal_name):
 		hide()
 		root.select(0)
 		connection_dock_tree.emit_signal("item_activated")
