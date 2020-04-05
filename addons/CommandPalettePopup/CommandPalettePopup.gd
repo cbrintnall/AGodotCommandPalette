@@ -30,6 +30,7 @@ var screen_factor = max(OS.get_screen_dpi() / 100, 1)
 var current_main_screen : String = ""
 var script_panel_visible : bool # only updated on context button press
 var old_dock_tab : Control # holds the old tab when switching dock for context menu
+var old_dock_tab_was_visible : bool
 var script_added_to : Node # the node a script, which is created with this plugin, will be added to
 var files_are_updating : bool = false
 var recent_files_are_updating : bool  = false
@@ -185,9 +186,6 @@ func _on_SettingsButton_pressed() -> void:
 func _on_ContextButton_pressed() -> void:
 	var selection = item_list.get_selected_items()
 	if selection:
-		var dfm_enabled = BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(\
-			BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child_count() - 1).pressed
-		
 		if current_filter == FILTER.ALL_OPEN_SCRIPTS:
 			if current_main_screen != "Script":
 				INTERFACE.set_main_screen_editor("Script")
@@ -225,13 +223,14 @@ func _on_ContextButton_pressed() -> void:
 				yield(get_tree(), "idle_frame")
 			var scene_tree_dock = _get_dock("SceneTreeDock")
 			old_dock_tab = scene_tree_dock.get_parent().get_current_tab_control()
+			old_dock_tab_was_visible = scene_tree_dock.get_parent().visible
 			var i = 0
 			while scene_tree_dock.get_parent().get_current_tab_control() != scene_tree_dock:
 				scene_tree_dock.get_parent().current_tab = i
 				i += 1
 			var scene_tree = scene_tree_dock.get_child(3).get_child(0) as Tree
 			var selected_name = item_list.get_item_text(selection[0])
-			if dfm_enabled:
+			if not old_dock_tab_was_visible:
 				scene_tree_dock.get_parent().show()
 				scene_tree_dock.get_parent().get_parent().show()
 				scene_tree_dock.get_parent().get_parent().get_parent().show()
@@ -274,15 +273,17 @@ func _on_ContextButton_pressed() -> void:
 					file_list = child.get_child(1).get_child(1)
 					file_split_view = child.get_child(1).visible
 			old_dock_tab = filesystem_dock.get_parent().get_current_tab_control()
+			old_dock_tab_was_visible = filesystem_dock.get_parent().visible
 			var i = 0
 			while filesystem_dock.get_parent().get_current_tab_control() != filesystem_dock:
 				filesystem_dock.get_parent().current_tab = i
 				i += 1
 			INTERFACE.select_file(path)
-			if dfm_enabled:
+			if not old_dock_tab_was_visible:
 				filesystem_dock.get_parent().show()
 				filesystem_dock.get_parent().get_parent().show()
 				filesystem_dock.get_parent().get_parent().get_parent().show()
+			yield(get_tree().create_timer(.01), "timeout")
 			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
 			if file_split_view:
 				yield(get_tree().create_timer(.01), "timeout")
@@ -325,9 +326,7 @@ func _on_node_and_file_context_menu_hide() -> void:
 	while old_dock_tab != old_dock_tab.get_parent().get_current_tab_control():
 		old_dock_tab.get_parent().current_tab = i
 		i += 1
-	var dfm_enabled = BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child(\
-			BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(0).get_child_count() - 1).pressed
-	if dfm_enabled:
+	if not old_dock_tab_was_visible:
 		old_dock_tab.get_parent().hide()
 		old_dock_tab.get_parent().get_parent().hide()
 		if old_dock_tab.get_parent().get_parent().get_parent() != BASE_CONTROL_VBOX.get_child(1).get_child(1): 
