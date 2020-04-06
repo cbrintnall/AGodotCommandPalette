@@ -221,25 +221,26 @@ func _on_ContextButton_pressed() -> void:
 			if not current_main_screen in ["2D", "3D"]:
 				INTERFACE.set_main_screen_editor("3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.set_main_screen_editor("2D")
 				yield(get_tree(), "idle_frame")
+				
 			var scene_tree_dock = _get_dock("SceneTreeDock")
 			old_dock_tab = scene_tree_dock.get_parent().get_current_tab_control()
-			old_dock_tab_was_visible = scene_tree_dock.get_parent().visible
+			old_dock_tab_was_visible = scene_tree_dock.get_parent().visible and scene_tree_dock.get_parent().get_parent().visible
 			var i = 0
 			while scene_tree_dock.get_parent().get_current_tab_control() != scene_tree_dock:
 				scene_tree_dock.get_parent().current_tab = i
 				i += 1
-			var scene_tree = scene_tree_dock.get_child(3).get_child(0) as Tree
-			var selected_name = item_list.get_item_text(selection[0])
 			if not old_dock_tab_was_visible:
 				scene_tree_dock.get_parent().show()
 				scene_tree_dock.get_parent().get_parent().show()
 				scene_tree_dock.get_parent().get_parent().get_parent().show()
+			var scene_tree = scene_tree_dock.get_child(3).get_child(0) as Tree
+			var selected_name = item_list.get_item_text(selection[0])
 			var sel = INTERFACE.get_selection()
 			sel.clear()
 			var node_path = item_list.get_item_text(selection[0] - 1) + selected_name if item_list.get_item_text(selection[0] - 1).begins_with("./") else "."
 			sel.add_node(INTERFACE.get_edited_scene_root().get_node(node_path))
-			yield(get_tree().create_timer(.01), "timeout")
 			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
+			yield(get_tree().create_timer(.01), "timeout")
 			while selected_name != scene_tree.get_item_at_position(pos).get_text(0):
 				pos.x = 5
 				pos.y += 5
@@ -273,7 +274,7 @@ func _on_ContextButton_pressed() -> void:
 					file_list = child.get_child(1).get_child(1)
 					file_split_view = child.get_child(1).visible
 			old_dock_tab = filesystem_dock.get_parent().get_current_tab_control()
-			old_dock_tab_was_visible = filesystem_dock.get_parent().visible
+			old_dock_tab_was_visible = filesystem_dock.get_parent().visible and filesystem_dock.get_parent().get_parent().visible
 			var i = 0
 			while filesystem_dock.get_parent().get_current_tab_control() != filesystem_dock:
 				filesystem_dock.get_parent().current_tab = i
