@@ -50,4 +50,4 @@ func _init_palette() -> void:
 
 func _cleanup_palette() -> void:
 	remove_control_from_container(EditorPlugin.CONTAINER_TOOLBAR, command_palette_popup)
-	command_palette_popup.free()
+	command_palette_popup.queue_free()

@@ -47,6 +47,9 @@ var SCRIPT_PANEL : VSplitContainer
 var SCRIPT_LIST : ItemList
 
 
+# TODO: integration with TxtFilesEdit and TODO plugins
+
+
 func _ready() -> void:
 	current_label.add_stylebox_override("normal", get_stylebox("normal", "LineEdit"))
 	last_label.add_stylebox_override("normal", get_stylebox("normal", "LineEdit"))
@@ -150,7 +153,7 @@ func _on_CopyButton_pressed() -> void:
 		
 		elif current_filter == FILTER.TREE_FOLDER:
 			var path : String = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length())
-			while path.begins_with("/"):
+			while path.begins_with("/") or path.begins_with(":"):
 				path.erase(0, 1)
 			if path.count("/") > 0:
 				path = path.rsplit("/", true, 1)[0] + "/"
@@ -424,7 +427,7 @@ func _on_Filter_text_changed(new_txt : String) -> void:
 			
 			elif current_filter == FILTER.TREE_FOLDER:
 				var path = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length()).strip_edges().rsplit("/", true, 1)[0] \
-						+ "/" if filter.text.count("/") > 0 else "//"
+						+ "/" if filter.text.count("/") > 0 else "://"
 				filter.text = palette_settings.keyword_folder_tree_LineEdit.text + path + item_list.get_item_text(selection[0])
 				filter.text += "/" if item_list.get_item_icon(selection[0]) else ""
 				filter.caret_position = filter.text.length()

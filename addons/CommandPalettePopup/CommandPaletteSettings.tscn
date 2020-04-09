@@ -40,12 +40,14 @@ __meta__ = {
 [node name="HideScriptPanelOnStart" type="CheckButton" parent="MarginContainer/VBoxContainer/SettingsVB"]
 margin_right = 924.0
 margin_bottom = 40.0
+pressed = true
 text = "Hide script panel on start"
 
 [node name="IncludeHelpPages" type="CheckButton" parent="MarginContainer/VBoxContainer/SettingsVB"]
 margin_top = 44.0
 margin_right = 924.0
 margin_bottom = 84.0
+pressed = true
 text = "Include help pages in open script list"
 
 [node name="AdaptiveHeight" type="CheckButton" parent="MarginContainer/VBoxContainer/SettingsVB"]
@@ -279,7 +281,7 @@ margin_right = 924.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 500, 0 )
 size_flags_horizontal = 10
-text = "res:"
+text = "res"
 
 [node name="KeywordGotoLine" type="HBoxContainer" parent="MarginContainer/VBoxContainer/SettingsVB"]
 margin_top = 484.0
@@ -299,7 +301,7 @@ margin_right = 924.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 500, 0 )
 size_flags_horizontal = 10
-text = ": "
+text = "g "
 
 [node name="KeywordGotoMethod" type="HBoxContainer" parent="MarginContainer/VBoxContainer/SettingsVB"]
 margin_top = 512.0

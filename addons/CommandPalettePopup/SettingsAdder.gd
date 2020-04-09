@@ -21,6 +21,7 @@ func _ready() -> void:
 func _unhandled_key_input(event: InputEventKey) -> void:
 	if visible:
 		get_tree().set_input_as_handled()
+	
 
 
 func _show() -> void:

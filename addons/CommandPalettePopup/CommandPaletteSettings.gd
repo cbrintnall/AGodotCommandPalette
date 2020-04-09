@@ -86,7 +86,7 @@ func load_default_settings() -> void:
 	keyword_select_node_LineEdit.text = "n "
 	keyword_editor_settings_LineEdit.text = "sett "
 	keyword_set_inspector_LineEdit.text = "set "
-	keyword_folder_tree_LineEdit.text = "res:"
+	keyword_folder_tree_LineEdit.text = "res"
 	hide_script_panel_button.pressed = false
 	include_help_pages_button.pressed = false
 	adaptive_height_button.pressed = true
