@@ -20,3 +20,10 @@ Opening a script will switch to the scene tab the script is attached to. It only
 While the popup is visible, pressing the shortcut again will switch to the last opened file. The two labels at the bottom show the current and the last file opened. 
 
 A copy button to quickly copy the file, node or settings path to the clipboard is available. There is a "context" button to access the context menu (rmb click) of the selected item for the FileSystemDock, NodeDock and SceneTreeDock.
+
+-----
+
+[color=aqua]%s [/color] will list the open text files (TextEditor plugin by [color=aqua]fenix-hub[/color]).
+[color=aqua]%s [/color] will list the todo list (TODO plugin by [color=aqua]need12648430[/color]).
+I have no affiliation with those plugins.
+

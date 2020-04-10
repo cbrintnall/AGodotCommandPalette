@@ -783,10 +783,10 @@ func _build_help_page() -> void:
 	var file = File.new()
 	file.open("res://addons/CommandPalettePopup/Help.txt", File.READ)
 	info_box.bbcode_text = file.get_as_text() % [palette_settings.keyword_all_open_scenes_LineEdit.text, palette_settings.keyword_all_files_LineEdit.text, \
-			palette_settings.keyword_all_scenes_LineEdit.text, 	palette_settings.keyword_all_scripts_LineEdit.text,palette_settings.keyword_select_node_LineEdit.text, \
+			palette_settings.keyword_all_scenes_LineEdit.text, palette_settings.keyword_all_scripts_LineEdit.text,palette_settings.keyword_select_node_LineEdit.text, \
 			palette_settings.keyword_editor_settings_LineEdit.text,palette_settings.keyword_set_inspector_LineEdit.text, \
 			palette_settings.keyword_folder_tree_LineEdit.text, palette_settings.keyword_goto_line_LineEdit.text, palette_settings.keyword_goto_method_LineEdit.text, \
-			palette_settings.keyword_set_inspector_LineEdit.text]
+			palette_settings.keyword_set_inspector_LineEdit.text, palette_settings.keyword_texteditor_plugin_LineEdit.text, palette_settings.keyword_todo_plugin_LineEdit.text]
 	file.close()
 
 
