@@ -306,7 +306,7 @@ func _on_ContextButton_pressed() -> void:
 				filesystem_dock.get_parent().get_parent().get_parent().show()
 			yield(get_tree().create_timer(.01), "timeout")
 			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
-			if file_split_view and not item_list.get_item_icon(selection[0]): # icon => folder
+			if (file_split_view and current_filter != FILTER.TREE_FOLDER) or (current_filter == FILTER.TREE_FOLDER and not item_list.get_item_icon(selection[0])): # icon => folder
 				while path.get_file() != file_list.get_item_text(file_list.get_item_at_position(pos)):
 					pos.x = 5
 					pos.y += 5
@@ -331,8 +331,9 @@ func _on_ContextButton_pressed() -> void:
 			for child in filesystem_dock.get_children():
 				if child is PopupMenu:
 					child.allow_search = true
-					child.call_deferred("set_position", (file_tree.rect_global_position if (not file_split_view) or item_list.get_item_icon(selection[0]) else \
-							file_list.rect_global_position) + Vector2(0, pos.y + 25 * screen_factor))
+					child.call_deferred("set_position", (file_list.rect_global_position if (file_split_view and current_filter != FILTER.TREE_FOLDER) or \
+							(current_filter == FILTER.TREE_FOLDER and not item_list.get_item_icon(selection[0])) else \
+							file_tree.rect_global_position) + Vector2(0, pos.y + 25 * screen_factor))
 					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
 					break
