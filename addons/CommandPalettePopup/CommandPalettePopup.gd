@@ -221,6 +221,7 @@ func _on_ContextButton_pressed() -> void:
 					child.call_deferred("set_position", SCRIPT_LIST.rect_global_position + Vector2(SCRIPT_LIST.rect_size.x - 25, pos.y))
 					if not child.is_connected("popup_hide", self, "_on_script_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_script_context_menu_hide")
+					break
 		
 		elif current_filter == FILTER.SELECT_NODE:
 			if not current_main_screen in ["2D", "3D"]:
@@ -265,10 +266,24 @@ func _on_ContextButton_pressed() -> void:
 					child.call_deferred("set_position", scene_tree.rect_global_position + Vector2(0, pos.y + 25 * screen_factor))
 					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
+					break
 		
-		elif current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS]:
-			var path = item_list.get_item_text(selection[0] - 1) + ("/" if not item_list.get_item_text(selection[0] - 1) == "res://" else "") \
-					+ item_list.get_item_text(selection[0])
+		elif current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS, FILTER.TREE_FOLDER]:
+			var path : String
+			if current_filter == FILTER.TREE_FOLDER:
+				path = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length())
+				while path.begins_with("/") or path.begins_with(":"):
+					path.erase(0, 1)
+				if path.count("/") > 0:
+					path = path.rsplit("/", true, 1)[0] + "/"
+					path += item_list.get_item_text(selection[0])
+				else:
+					path = item_list.get_item_text(selection[0])
+				path = "res://" + path.strip_edges()
+			else:
+				path = item_list.get_item_text(selection[0] - 1) + ("/" if not item_list.get_item_text(selection[0] - 1) == "res://" else "") \
+						+ item_list.get_item_text(selection[0])
+			
 			var filesystem_dock = UTIL.get_dock("FileSystemDock", BASE_CONTROL_VBOX)
 			var file_tree : Tree
 			var file_list : ItemList
@@ -291,8 +306,7 @@ func _on_ContextButton_pressed() -> void:
 				filesystem_dock.get_parent().get_parent().get_parent().show()
 			yield(get_tree().create_timer(.01), "timeout")
 			var pos = Vector2(30, 5) * screen_factor # x = 30 so we don't click the folding arrow
-			if file_split_view:
-				yield(get_tree().create_timer(.01), "timeout")
+			if file_split_view and not item_list.get_item_icon(selection[0]): # icon => folder
 				while path.get_file() != file_list.get_item_text(file_list.get_item_at_position(pos)):
 					pos.x = 5
 					pos.y += 5
@@ -302,6 +316,7 @@ func _on_ContextButton_pressed() -> void:
 				pos.y += 5 * screen_factor
 				hide()
 				file_list.emit_signal("item_rmb_selected", file_list.get_selected_items()[0], pos)
+			
 			else:
 				while path.get_file() != file_tree.get_item_at_position(pos).get_text(0):
 					pos.x = 5
@@ -316,10 +331,11 @@ func _on_ContextButton_pressed() -> void:
 			for child in filesystem_dock.get_children():
 				if child is PopupMenu:
 					child.allow_search = true
-					child.call_deferred("set_position", (file_tree.rect_global_position if not file_split_view else \
+					child.call_deferred("set_position", (file_tree.rect_global_position if (not file_split_view) or item_list.get_item_icon(selection[0]) else \
 							file_list.rect_global_position) + Vector2(0, pos.y + 25 * screen_factor))
 					if not child.is_connected("popup_hide", self, "_on_node_and_file_context_menu_hide"):
 						child.connect("popup_hide", self, "_on_node_and_file_context_menu_hide")
+					break
 
 
 func _on_script_context_menu_hide() -> void:
@@ -1092,7 +1108,7 @@ func _setup_buttons() -> void:
 			copy_button.text = "Copy File Path"
 			add_button.visible = false
 			signal_button.visible = false
-			context_button.visible = true if current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS, FILTER.ALL_OPEN_SCRIPTS] else false
+			context_button.visible = true if current_filter != FILTER.ALL_OPEN_SCENES else false
 		FILTER.SELECT_NODE:
 			copy_button.visible = true
 			copy_button.text = "Copy Node Path"
