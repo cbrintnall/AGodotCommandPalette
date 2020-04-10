@@ -19,6 +19,8 @@ onready var settings_button = $PaletteMarginContainer/VBoxContainer/SearchFilter
 onready var signal_button = $PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton
 onready var signal_popup = $PaletteMarginContainer/VBoxContainer/SearchFilter/SignalButton/SignalPopupMenu
 	
+const UTIL = preload("res://addons/CommandPalettePopup/util.gd")
+	
 var editor_settings : Dictionary # holds all editor settings [path] : {settings_dictionary}
 var project_settings : Dictionary # holds all project settings [path] : {settings_dictionary}
 var scenes : Dictionary # holds all scenes; [file_path] = {icon}
@@ -34,7 +36,8 @@ var old_dock_tab_was_visible : bool
 var script_added_to : Node # the node a script, which is created with this plugin, will be added to
 var files_are_updating : bool = false
 var recent_files_are_updating : bool  = false
-enum FILTER {ALL_FILES, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SELECT_NODE, SETTINGS, INSPECTOR, GOTO_LINE, GOTO_METHOD, HELP, TREE_FOLDER}
+enum FILTER {ALL_FILES, ALL_SCENES, ALL_SCRIPTS, ALL_OPEN_SCENES, ALL_OPEN_SCRIPTS, SELECT_NODE, SETTINGS, INSPECTOR, GOTO_LINE, GOTO_METHOD, HELP, \
+		TREE_FOLDER, FILEEDITOR, TODO}
 var current_filter : int
 	
 var INTERFACE : EditorInterface
@@ -45,9 +48,8 @@ var SCRIPT_CREATE_DIALOG : ScriptCreateDialog
 var EDITOR_SETTINGS : EditorSettings
 var SCRIPT_PANEL : VSplitContainer
 var SCRIPT_LIST : ItemList
-
-
-# TODO: TxtFilesEdit or TODO plugins
+# 3rd party plugins
+var FILELIST : ItemList
 
 
 func _ready() -> void:
@@ -225,7 +227,7 @@ func _on_ContextButton_pressed() -> void:
 				INTERFACE.set_main_screen_editor("3D") if INTERFACE.get_edited_scene_root() is Spatial else INTERFACE.set_main_screen_editor("2D")
 				yield(get_tree(), "idle_frame")
 				
-			var scene_tree_dock = _get_dock("SceneTreeDock")
+			var scene_tree_dock = UTIL.get_dock("SceneTreeDock", BASE_CONTROL_VBOX)
 			old_dock_tab = scene_tree_dock.get_parent().get_current_tab_control()
 			old_dock_tab_was_visible = scene_tree_dock.get_parent().visible and scene_tree_dock.get_parent().get_parent().visible
 			var i = 0
@@ -267,7 +269,7 @@ func _on_ContextButton_pressed() -> void:
 		elif current_filter in [FILTER.ALL_FILES, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS]:
 			var path = item_list.get_item_text(selection[0] - 1) + ("/" if not item_list.get_item_text(selection[0] - 1) == "res://" else "") \
 					+ item_list.get_item_text(selection[0])
-			var filesystem_dock = _get_dock("FileSystemDock")
+			var filesystem_dock = UTIL.get_dock("FileSystemDock", BASE_CONTROL_VBOX)
 			var file_tree : Tree
 			var file_list : ItemList
 			var file_split_view : bool
@@ -353,7 +355,7 @@ func _on_SignalButton_pressed() -> void:
 
 func _on_SignalPopupMenu_index_pressed(index : int) -> void:
 	var signal_name = signal_popup.get_item_text(index) + "("
-	var node_dock = _get_dock("NodeDock")
+	var node_dock = UTIL.get_dock("NodeDock", BASE_CONTROL_VBOX)
 	var connection_dock_tree = node_dock.get_child(1).get_child(0)
 	var selected_index = item_list.get_selected_items()[0]
 	var node_path = item_list.get_item_text(selected_index - 1) + item_list.get_item_text(selected_index) \
@@ -523,6 +525,31 @@ func _activate_item(selected_index : int = -1) -> void:
 		else:
 			_open_selection(path)
 	
+	elif current_filter == FILTER.FILEEDITOR:
+		INTERFACE.set_main_screen_editor("File")
+		for idx in FILELIST.get_item_count():
+			if FILELIST.get_item_text(idx) == selected_name:
+				FILELIST.select(idx)
+				FILELIST.emit_signal("item_selected", FILELIST.get_selected_items()[0])
+				FILELIST.get_parent().get_parent().get_child(1).get_child(0).get_child(3).grab_focus()
+				break
+	
+	elif current_filter == FILTER.TODO:
+		var todo_dock = UTIL.get_dock("TODO", BASE_CONTROL_VBOX)
+		var tree = todo_dock.get_child(1).get_child(0) as Tree
+		var file = tree.get_root().get_children()
+		while file:
+			var todo = file.get_children() as TreeItem
+			while todo:
+				var todoname = todo.get_text(0)
+				if todoname == selected_name:
+					todo.select(0)
+					tree.emit_signal("item_activated")
+					hide()
+					return
+				todo = todo.get_next()
+			file = file.get_next()
+	
 	else:
 		push_warning("Command Palette Plugin: You should not be seeing this message. Please open an issue on Github and tell me what you did to see this.")
 	
@@ -654,7 +681,27 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 		current_filter = FILTER.SELECT_NODE
 		_build_node_list(INTERFACE.get_edited_scene_root(), search_string.substr(palette_settings.keyword_select_node_LineEdit.text.length()).strip_edges())
 		_count_node_list()
-
+	
+	# file plugin
+	elif search_string.begins_with(palette_settings.keyword_texteditor_plugin_LineEdit.text):
+		_set_file_list()
+		if FILELIST:
+			current_filter = FILTER.FILEEDITOR
+			_build_item_list(search_string.substr(palette_settings.keyword_texteditor_plugin_LineEdit.text.length()))
+		else:
+			push_warning("Command Plugin Palette: TextEditor Integration plugin not installed.")
+			return
+	
+	# todo plugin
+	elif search_string.begins_with(palette_settings.keyword_todo_plugin_LineEdit.text):
+		var todo_dock = UTIL.get_dock("TODO", BASE_CONTROL_VBOX)
+		if todo_dock:
+			current_filter = FILTER.TODO
+			_build_todo_list(search_string.substr(palette_settings.keyword_todo_plugin_LineEdit.text.length()), todo_dock.get_child(1).get_child(0))
+		else:
+			push_warning("Command Plugin Palette: ToDo plugin not installed.")
+			return
+	
 	# edit editor settings
 	elif search_string.begins_with(palette_settings.keyword_editor_settings_LineEdit.text):
 		current_filter = FILTER.SETTINGS
@@ -707,7 +754,7 @@ func _update_popup_list(just_popupped : bool = false) -> void:
 	
 	quickselect_line = clamp(quickselect_line as int, 0, item_list.get_item_count() / item_list.max_columns - 1)
 	if item_list.get_item_count() >= item_list.max_columns:
-		item_list.select(quickselect_line * item_list.max_columns + (1 if current_filter in [FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS, \
+		item_list.select(quickselect_line * item_list.max_columns + (1 if current_filter in [FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS, FILTER.FILEEDITOR, \
 				FILTER.GOTO_METHOD, FILTER.TREE_FOLDER] else 2))
 		item_list.ensure_current_is_visible()
 	_adapt_list_height()
@@ -798,7 +845,7 @@ func _build_item_list(search_string : String) -> void:
 		FILTER.GOTO_METHOD:
 			var current_script = EDITOR.get_current_script()
 			var method_dict : Dictionary # maps methods to their line position
-			var code_editor : TextEdit = _get_current_code_editor()
+			var code_editor : TextEdit = UTIL.get_current_script_texteditor(EDITOR)
 			for method in current_script.get_script_method_list():
 				if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
 					continue
@@ -817,6 +864,13 @@ func _build_item_list(search_string : String) -> void:
 				item_list.set_item_disabled(item_list.get_item_count() - 1, true)
 				counter += 1
 			return
+		
+		FILTER.FILEEDITOR:
+			for idx in FILELIST.get_item_count():
+				var file = FILELIST.get_item_text(idx)
+				if search_string and not file.matchn("*" + search_string + "*") and not search_string.is_subsequence_ofi(file):
+					continue
+				path_matched_list.push_back(file)
 		
 		FILTER.SETTINGS:
 			for setting in editor_settings:
@@ -908,6 +962,10 @@ func _build_item_list(search_string : String) -> void:
 				item_list.add_item(path_matched_list[idx].get_base_dir())
 				item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
 		
+		elif current_filter == FILTER.FILEEDITOR:
+			item_list.add_item(path_matched_list[idx])
+			item_list.add_item("")
+		
 		index += 1
 	
 	if palette_settings.include_help_pages_button.pressed and current_filter == FILTER.ALL_OPEN_SCRIPTS:
@@ -921,6 +979,26 @@ func _build_item_list(search_string : String) -> void:
 				item_list.set_item_metadata(item_list.get_item_count() - 1, script_index + EDITOR.get_open_scripts().size())
 				item_list.add_item("")
 				index += 1
+
+
+func _build_todo_list(search_string : String, todo_dock_tree : Control) -> void:
+	var counter = 0
+	var file = todo_dock_tree.get_root().get_children()
+	while file:
+		var todo = file.get_children() as TreeItem
+		while todo:
+			var todoname = todo.get_text(0)
+			if not search_string or todoname.matchn("*" + search_string.strip_edges().replace(" ", "*") + "*") or search_string.is_subsequence_ofi(todoname):
+				item_list.add_item(" " + String(counter) + "  :: ", null, false)
+				item_list.add_item(file.get_text(0), null, false)
+				item_list.set_item_custom_fg_color(item_list.get_item_count() - 1, secondary_color)
+				item_list.add_item(todo.get_text(0), todo.get_icon(0))
+				counter += 1
+			todo = todo.get_next()
+		file = file.get_next()
+	
+	if item_list.get_item_count() == 0:
+		item_list.add_item("Nothing to do in this script!")
 
 
 # select a node
@@ -1030,13 +1108,14 @@ func _setup_buttons() -> void:
 				add_button.icon = get_icon("MultiEdit", "EditorIcons")
 			signal_button.visible = false
 			context_button.visible = false
-		FILTER.GOTO_LINE, FILTER.GOTO_METHOD, FILTER.HELP:
+		FILTER.GOTO_LINE, FILTER.GOTO_METHOD, FILTER.HELP, FILTER.FILEEDITOR, FILTER.TODO:
 			for button in [add_button, copy_button, signal_button, context_button]:
 				button.visible = false
 	
 	if item_list.get_item_count() < item_list.max_columns:
 		for button in [add_button, copy_button, context_button, signal_button]:
 			button.visible = false
+
 
 func _quick_sort_by_file_name(array : Array, lo : int, hi : int) -> void:
 	if lo < hi:
@@ -1066,7 +1145,7 @@ func _partition(array : Array, lo : int, hi : int):
 
 
 func _current_filter_displays_files() -> bool:
-	return not current_filter in [FILTER.SELECT_NODE, FILTER.SETTINGS, FILTER.HELP, FILTER.GOTO_LINE, FILTER.GOTO_METHOD, FILTER.INSPECTOR, FILTER.TREE_FOLDER]
+	return current_filter in [FILTER.ALL_FILES, FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS, FILTER.ALL_SCENES, FILTER.ALL_SCRIPTS]
 
 
 func _update_files_dictionary(folder : EditorFileSystemDirectory, reset : bool = false) -> void:
@@ -1145,7 +1224,7 @@ func _update_recent_files():
 		recent_files_are_updating = false
 
 
-func _update_editor_settings() -> void: 
+func _update_editor_settings() -> void: # only called during startup because editor settings can't be changed via normal means
 	for setting in EDITOR_SETTINGS.get_property_list():
 		# general settings only
 		if setting.name and setting.name.find("/") != -1 and setting.usage & PROPERTY_USAGE_EDITOR and not setting.name.begins_with("favorite_projects/"):
@@ -1159,31 +1238,9 @@ func _update_project_settings() -> void:
 			project_settings[setting.name] = setting
 
 
-func _get_dock(dclass : String) -> Node: # dclass : "FileSystemDock" || "ImportDock" || "NodeDock" || "SceneTreeDock" || "InspectorDock"
-	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(0).get_children(): # LEFT left
-		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass or dock.name == dclass:
-				return dock
-	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(0).get_children(): # LEFT right
-		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass or dock.name == dclass:
-				return dock
-	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(0).get_children(): # RIGHT left
-		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass or dock.name == dclass:
-				return dock
-	for tabcontainer in BASE_CONTROL_VBOX.get_child(1).get_child(1).get_child(1).get_child(1).get_child(1).get_children(): # RIGHT right
-		for dock in tabcontainer.get_children():
-			if dock.get_class() == dclass or dock.name == dclass:
-				return dock
-	push_warning("Command Palette Plugin: Error dock finding dock.")
-	return null
-
-
-func _get_current_code_editor() -> TextEdit:
-	var script_index = 0
-	for script in EDITOR.get_open_scripts():
-		if script == EDITOR.get_current_script():
-			break
-		script_index += 1
-	return EDITOR.get_child(0).get_child(1).get_child(1).get_child(script_index).get_child(0).get_child(0).get_child(0) as TextEdit # :(
+func _set_file_list() -> void:
+	for child in EDITOR.get_parent().get_children():
+		if child.name == "FileEditor" and child.get_class() == "Control":
+			FILELIST = child.get_child(0).get_child(1).get_child(0).get_child(0)
+			return
+		FILELIST = null

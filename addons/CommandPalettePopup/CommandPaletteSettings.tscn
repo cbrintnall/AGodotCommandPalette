@@ -3,10 +3,11 @@
 [ext_resource path="res://addons/CommandPalettePopup/CommandPaletteSettings.gd" type="Script" id=1]
 
 [node name="CommandPaletteSettings" type="WindowDialog"]
+visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_bottom = -200.0
-rect_min_size = Vector2( 0, 615 )
+margin_bottom = 65.0001
+rect_min_size = Vector2( 0, 665 )
 window_title = "Command Palette Settings"
 script = ExtResource( 1 )
 __meta__ = {
@@ -25,14 +26,14 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 margin_right = 924.0
-margin_bottom = 600.0
+margin_bottom = 650.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="SettingsVB" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
 margin_right = 924.0
-margin_bottom = 536.0
+margin_bottom = 592.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -40,7 +41,6 @@ __meta__ = {
 [node name="HideScriptPanelOnStart" type="CheckButton" parent="MarginContainer/VBoxContainer/SettingsVB"]
 margin_right = 924.0
 margin_bottom = 40.0
-pressed = true
 text = "Hide script panel on start"
 
 [node name="IncludeHelpPages" type="CheckButton" parent="MarginContainer/VBoxContainer/SettingsVB"]
@@ -301,7 +301,7 @@ margin_right = 924.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 500, 0 )
 size_flags_horizontal = 10
-text = "g "
+text = ": "
 
 [node name="KeywordGotoMethod" type="HBoxContainer" parent="MarginContainer/VBoxContainer/SettingsVB"]
 margin_top = 512.0
@@ -323,20 +323,60 @@ rect_min_size = Vector2( 500, 0 )
 size_flags_horizontal = 10
 text = "m "
 
+[node name="KeywordTexteditorPlugin" type="HBoxContainer" parent="MarginContainer/VBoxContainer/SettingsVB"]
+margin_top = 540.0
+margin_right = 924.0
+margin_bottom = 564.0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/SettingsVB/KeywordTexteditorPlugin"]
+margin_top = 5.0
+margin_right = 226.0
+margin_bottom = 19.0
+text = "Keyword texteditor plugin (by fenix)"
+valign = 1
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/SettingsVB/KeywordTexteditorPlugin"]
+margin_left = 424.0
+margin_right = 924.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 500, 0 )
+size_flags_horizontal = 10
+text = "file "
+
+[node name="KeywordTODOPlugin" type="HBoxContainer" parent="MarginContainer/VBoxContainer/SettingsVB"]
+margin_top = 568.0
+margin_right = 924.0
+margin_bottom = 592.0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/SettingsVB/KeywordTODOPlugin"]
+margin_top = 5.0
+margin_right = 257.0
+margin_bottom = 19.0
+text = "Keyword todo plugin (by need12648430)"
+valign = 1
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/SettingsVB/KeywordTODOPlugin"]
+margin_left = 424.0
+margin_right = 924.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 500, 0 )
+size_flags_horizontal = 10
+text = "todo "
+
 [node name="ButtonsHB" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 margin_left = 387.0
-margin_top = 540.0
+margin_top = 596.0
 margin_right = 537.0
-margin_bottom = 600.0
+margin_bottom = 650.0
 rect_min_size = Vector2( 0, 45 )
 size_flags_horizontal = 4
 size_flags_vertical = 7
 custom_constants/separation = 25
 
 [node name="SaveButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsHB"]
-margin_top = 20.0
+margin_top = 17.0
 margin_right = 60.0
-margin_bottom = 40.0
+margin_bottom = 37.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -344,9 +384,9 @@ text = "Save"
 
 [node name="DefaultsButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsHB"]
 margin_left = 85.0
-margin_top = 20.0
+margin_top = 17.0
 margin_right = 150.0
-margin_bottom = 40.0
+margin_bottom = 37.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 4
 size_flags_vertical = 4

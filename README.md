@@ -2,6 +2,7 @@
 
 **Changelog for 1.5.0**:
 
+- basic integration to access https://github.com/fenix-hub/godot-engine.text-editor and https://github.com/need12648430/godot3-todo via command palette. **I have no affiliation with any of those plugins. I only use them personally.**
 - Open documentation pages are now included in the default list.
 - context menu for the FileSystemDock, NodeDock and SceneTreeDock (via a button on the right).
 - signal connection via a button using the "select a node" filter.
