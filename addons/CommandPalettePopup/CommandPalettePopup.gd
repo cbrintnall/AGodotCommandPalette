@@ -47,7 +47,7 @@ var SCRIPT_PANEL : VSplitContainer
 var SCRIPT_LIST : ItemList
 
 
-# TODO: integration with TxtFilesEdit and TODO plugins
+# TODO: TxtFilesEdit or TODO plugins
 
 
 func _ready() -> void:
@@ -515,7 +515,7 @@ func _activate_item(selected_index : int = -1) -> void:
 	
 	elif current_filter == FILTER.TREE_FOLDER:
 		var path : String = filter.text.substr(palette_settings.keyword_folder_tree_LineEdit.text.length())
-		while path.begins_with("/"):
+		while path.begins_with("/") or path.begins_with(":"):
 			path.erase(0, 1)
 		path = "res://" + (path.rsplit("/", true, 1)[0] + "/" + selected_name if path.count("/") > 0 else selected_name)
 		if item_list.get_item_icon(selected_index):
