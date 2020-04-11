@@ -17,7 +17,7 @@
 - Select any node in the current scene. Add a new script to a node.
 - Edit Inspector properties of the currently selected node.
 - Edit general Project/Editor settings. Add new Project settings.
-- Traverse the file tree with autocompletion on paths (list all files and folders in a given path).
+- Traverse the file tree with autocompletion on paths (list all files and folders in a given path; see .gif).
 - Go to line.
 - Go to method.
 - Quickswitch to the last file opened.

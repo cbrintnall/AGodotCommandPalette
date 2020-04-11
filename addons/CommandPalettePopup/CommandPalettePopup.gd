@@ -51,7 +51,6 @@ var SCRIPT_LIST : ItemList
 # 3rd party plugins
 var FILELIST : ItemList
 
-# TODO : switch to inspector and back when editing inspector peoperty
 
 func _ready() -> void:
 	current_label.add_stylebox_override("normal", get_stylebox("normal", "LineEdit"))
@@ -525,6 +524,11 @@ func _activate_item(selected_index : int = -1) -> void:
 		
 		yield(get_tree().create_timer(.01), "timeout")
 		INTERFACE.get_inspector().follow_focus = true
+		var inspector_dock = INTERFACE.get_inspector().get_parent()
+		if inspector_dock.get_parent().visible:
+			inspector_dock.get_parent().current_tab = inspector_dock.get_index()
+		else:
+			push_warning("Command Palette Plugin: Inspector is not visible")
 		_inspector_property_editor_grab_focus(selected_name)
 	
 	elif current_filter == FILTER.SELECT_NODE:
