@@ -8,7 +8,6 @@
 - signal connection via a button using the "select a node" filter.
 - removed export vars and moved them to a dedicated settings page. Available: hide script panel on start, show docs in default list, keywords for filters, keyboard shortcut, popup size, adaptive popup size, show path for recent files
 
-
 - **See the built-in help page (type "?") on how to use the features.**
 
 
@@ -34,5 +33,8 @@
 
 Either download it from the official Godot AssetLib (within Godot itself) or download the addons folder from here and move it to the root (res://) of your project. Enable the plugin in the project settings.
 
-![Preview](preview.png)
+
+**Preview**
+
 ![Preview2](preview2.gif)
+![Preview](preview.png)

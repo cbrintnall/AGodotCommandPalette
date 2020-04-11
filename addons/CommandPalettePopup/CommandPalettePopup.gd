@@ -51,6 +51,7 @@ var SCRIPT_LIST : ItemList
 # 3rd party plugins
 var FILELIST : ItemList
 
+# TODO : switch to inspector and back when editing inspector peoperty
 
 func _ready() -> void:
 	current_label.add_stylebox_override("normal", get_stylebox("normal", "LineEdit"))
