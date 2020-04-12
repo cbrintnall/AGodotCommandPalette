@@ -1020,7 +1020,7 @@ func _build_todo_list(search_string : String, todo_dock_tree : Control) -> void:
 		file = file.get_next()
 	
 	if item_list.get_item_count() == 0:
-		item_list.add_item("Nothing to do in this script!")
+		item_list.add_item(todo_dock_tree.get_root().get_children().get_text(0)) # Nothing to do in this project/script
 
 
 # select a node
