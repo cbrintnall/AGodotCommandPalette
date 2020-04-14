@@ -32,9 +32,5 @@ static func get_dock(dclass : String, base_control_vbox : VBoxContainer) -> Node
 
 
 static func get_current_script_texteditor(script_editor : ScriptEditor) -> TextEdit:
-	var script_index = 0
-	for script in script_editor.get_open_scripts():
-		if script == script_editor.get_current_script():
-			break
-		script_index += 1
+	var script_index = script_editor.get_child(0).get_child(1).get_child(1).get_current_tab_control().get_index() # be careful about help pages
 	return script_editor.get_child(0).get_child(1).get_child(1).get_child(script_index).get_child(0).get_child(0).get_child(0) as TextEdit 

@@ -557,7 +557,7 @@ func _activate_item(selected_index : int = -1) -> void:
 				break
 	
 	elif current_filter == FILTER.TODO:
-		var todo_dock = UTIL.get_dock("TODO", BASE_CONTROL_VBOX)
+		var todo_dock = UTIL.m("TODO", BASE_CONTROL_VBOX)
 		var tree = todo_dock.get_child(1).get_child(0) as Tree
 		var file = tree.get_root().get_children()
 		while file:
@@ -866,26 +866,27 @@ func _build_item_list(search_string : String) -> void:
 		
 		FILTER.GOTO_METHOD:
 			var current_script = EDITOR.get_current_script()
-			var method_dict : Dictionary # maps methods to their line position
-			var code_editor : TextEdit = UTIL.get_current_script_texteditor(EDITOR)
-			for method in current_script.get_script_method_list():
-				if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
-					continue
-				var result = code_editor.search("func " + method.name, 0, 0, 0)
-				if result: # get_script_method_list() also lists methods which aren't explicitly coded (like _init and _ready)
-					var line = result[TextEdit.SEARCH_RESULT_LINE]
-					method_dict[line] = method.name
-			var lines = method_dict.keys() # get_script_method_list() doesnt give the path_matched_list in order of appearance in the script
-			lines.sort()
-			
-			var counter = 0
-			for line_number in lines:
-				item_list.add_item(" " + String(counter) + "  :: ", null, false)
-				item_list.add_item(method_dict[line_number])
-				item_list.add_item(" : " + String(line_number + 1), null, false)
-				item_list.set_item_disabled(item_list.get_item_count() - 1, true)
-				counter += 1
-			return
+			if current_script: # if not current_script => help page
+				var method_dict : Dictionary # maps methods to their line position
+				var code_editor : TextEdit = UTIL.get_current_script_texteditor(EDITOR)
+				for method in current_script.get_script_method_list():
+					if search_string and not search_string.is_subsequence_ofi(method.name) and not method.name.matchn("*" + search_string + "*"):
+						continue
+					var result = code_editor.search("func " + method.name, 0, 0, 0)
+					if result: # get_script_method_list() also lists methods which aren't explicitly coded (like _init and _ready)
+						var line = result[TextEdit.SEARCH_RESULT_LINE]
+						method_dict[line] = method.name
+				var lines = method_dict.keys() # get_script_method_list() doesnt give the path_matched_list in order of appearance in the script
+				lines.sort()
+				
+				var counter = 0
+				for line_number in lines:
+					item_list.add_item(" " + String(counter) + "  :: ", null, false)
+					item_list.add_item(method_dict[line_number])
+					item_list.add_item(" : " + String(line_number + 1), null, false)
+					item_list.set_item_disabled(item_list.get_item_count() - 1, true)
+					counter += 1
+				return
 		
 		FILTER.FILEEDITOR:
 			for idx in FILELIST.get_item_count():
