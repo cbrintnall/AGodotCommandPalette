@@ -136,10 +136,10 @@ func _on_CopyButton_pressed() -> void:
 		elif _current_filter_displays_files():
 			var path : String = ""
 			if current_filter in [FILTER.ALL_OPEN_SCENES, FILTER.ALL_OPEN_SCRIPTS]:
-				path = item_list.get_item_text(selection[0] + 1) + ("/" if item_list.get_item_text(selection[0]).count("/") > 0 else "") \
+				path = item_list.get_item_text(selection[0] + 1) + ("/" if not item_list.get_item_text(selection[0] + 1).ends_with("/") else "") \
 						+ item_list.get_item_text(selection[0]).strip_edges()
 			else:
-				path = item_list.get_item_text(selection[0] - 1) + ("/" if item_list.get_item_text(selection[0]).count("/") > 0 else "") \
+				path = item_list.get_item_text(selection[0] - 1) + ("/" if not item_list.get_item_text(selection[0] - 1).ends_with("/") else "") \
 						+ item_list.get_item_text(selection[0]).strip_edges()
 			OS.clipboard = path
 		
